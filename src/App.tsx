@@ -12,7 +12,7 @@ import { ContactPage } from './components/website/ContactPage';
 import { MobileAppView } from './components/mobile/MobileAppView';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { HomeLoanEnquiry } from './types';
-import { updateDocumentSEO, getEligibilityPageTitle } from './utils/seo';
+import { updateDocumentSEO, getEligibilityPageTitle, getEnquiryPageTitle } from './utils/seo';
 import { initSupabaseSync } from './services/storageService';
 
 // Route parser helper
@@ -160,11 +160,13 @@ export function App() {
   // Update dynamic SEO tags whenever activeTab, viewMode or the routed loan type changes
   useEffect(() => {
     if (viewMode === 'website') {
-      // The eligibility page title follows the ?type= query param
-      // e.g. #/eligibility?amount=500000&type=Personal+Loan
+      // Page titles follow the ?type= query param
+      // e.g. #/eligibility?amount=500000&type=Personal+Loan, #/enquiry?type=Personal+Loan
       const customTitle =
         activeTab === 'eligibility'
           ? `${getEligibilityPageTitle(navState.loanType)} (Instant) | BLR15 Home Loans Bangalore`
+          : activeTab === 'enquiry'
+          ? `${getEnquiryPageTitle(navState.loanType)} Form – Free Doorstep Consultation | BLR15 Bangalore`
           : undefined;
       updateDocumentSEO(activeTab, customTitle);
     } else if (viewMode === 'admin') {

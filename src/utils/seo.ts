@@ -230,6 +230,18 @@ export function getEligibilityPageTitle(loanType?: string): string {
 }
 
 /**
+ * Enquiry page headline for a given loan type from the URL.
+ * e.g. #/enquiry?type=Personal+Loan -> "Personal Loan Enquiry"
+ * Any home loan variant (or no type) keeps the generic "Home Loan Enquiry".
+ */
+export function getEnquiryPageTitle(loanType?: string): string {
+  const label = getLoanTypeLabel(loanType);
+  if (label === 'Personal Loan') return 'Personal Loan Enquiry';
+  if (label === 'Car Loan') return 'Car Loan Enquiry';
+  return 'Home Loan Enquiry';
+}
+
+/**
  * Updates page title, meta description, open graph tags, canonical tag, and structured JSON-LD
  */
 export function updateDocumentSEO(routeKey: string, customTitle?: string) {

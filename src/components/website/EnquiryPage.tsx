@@ -14,6 +14,7 @@ import {
 import { EmploymentType, PropertyType, HomeLoanEnquiry, LoanType } from '../../types';
 import { createEnquiry, formatINR } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
+import { getLoanTypeLabel, getEnquiryPageTitle } from '../../utils/seo';
 
 interface EnquiryPageProps {
   initialLoanType?: string;
@@ -21,21 +22,78 @@ interface EnquiryPageProps {
   onEnquirySuccess?: (enquiry: HomeLoanEnquiry) => void;
 }
 
+interface LoanTypeOption {
+  value: LoanType;
+  label: string;
+  group: 'home' | 'other';
+}
+
+/** Complete list of loan types offered on the enquiry form (label = text shown in the select). */
+const LOAN_TYPE_OPTIONS: LoanTypeOption[] = [
+  { value: 'Home Purchase Loan', label: 'Home Purchase Loan (New / Resale)', group: 'home' },
+  { value: 'Home Construction Loan', label: 'Home Construction Loan', group: 'home' },
+  { value: 'Home Loan Balance Transfer', label: 'Home Loan Balance Transfer', group: 'home' },
+  { value: 'Home Loan Top-Up', label: 'Home Loan Top-Up', group: 'home' },
+  { value: 'Personal Loan', label: 'Personal Loan (Instant, Paperless - Up to ₹40L)', group: 'other' },
+  { value: 'Car Loan', label: 'Car Loan (New Car, Used Car & EV - Up to 100% On-Road)', group: 'other' },
+];
+
+const ALL_LOAN_TYPES: LoanType[] = LOAN_TYPE_OPTIONS.map(o => o.value);
+
+/** Loan types listed under the "🏠 Home Loans" optgroup / "Home Loan Enquiry" headline. */
+const HOME_LOAN_TYPES: LoanType[] = LOAN_TYPE_OPTIONS.filter(o => o.group === 'home').map(o => o.value);
+
+/**
+ * Resolves the ?type= query value to a LoanType that actually exists in ALL_LOAN_TYPES.
+ * Unknown / generic values (e.g. "Home Loan", "Nonsense") fall back to Home Purchase Loan.
+ */
+const resolveInitialLoanType = (value?: string): LoanType => {
+  const raw = (value || '').trim();
+  const exact = ALL_LOAN_TYPES.find(o => o.toLowerCase() === raw.toLowerCase());
+  if (exact) return exact;
+  const label = getLoanTypeLabel(raw);
+  if (label === 'Personal Loan') return 'Personal Loan';
+  if (label === 'Car Loan') return 'Car Loan';
+  return 'Home Purchase Loan';
+};
+
+/**
+ * Loan types listed in the select — filtered when the page is opened for a
+ * specific GET type so the form stays focused (e.g. ?type=Personal+Loan only
+ * offers Personal Loan; ?type=Home+Loan+Balance+Transfer keeps the 4 home options).
+ */
+const getVisibleLoanTypes = (value?: string): LoanType[] => {
+  const label = getLoanTypeLabel(value);
+  if (label === 'Personal Loan') return ['Personal Loan'];
+  if (label === 'Car Loan') return ['Car Loan'];
+  if (label) return HOME_LOAN_TYPES;
+  return ALL_LOAN_TYPES;
+};
+
 export const EnquiryPage: React.FC<EnquiryPageProps> = ({
   initialLoanType,
   onNavigate,
   onEnquirySuccess,
 }) => {
+  // The ?type= value from the GET query drives the headline, the loan type
+  // list and the default amounts (e.g. #/enquiry?type=Personal+Loan)
+  const defaultLoanType = resolveInitialLoanType(initialLoanType);
+  const visibleLoanTypes = getVisibleLoanTypes(initialLoanType);
+  const enquiryTitle = getEnquiryPageTitle(initialLoanType);
+  const visibleOptions = LOAN_TYPE_OPTIONS.filter(o => visibleLoanTypes.includes(o.value));
+  const homeTypeOptions = visibleOptions.filter(o => o.group === 'home');
+  const otherTypeOptions = visibleOptions.filter(o => o.group !== 'home');
+
   const [formData, setFormData] = useState({
     name: '',
     mobile: '',
     email: '',
     city: 'Bangalore',
     employmentType: 'Salaried' as EmploymentType,
-    loanType: (initialLoanType as LoanType) || 'Home Purchase Loan',
+    loanType: defaultLoanType,
     monthlyIncome: 125000,
-    requiredLoanAmount: initialLoanType === 'Personal Loan' ? 500000 : initialLoanType === 'Car Loan' ? 1000000 : 5000000,
-    propertyValue: initialLoanType === 'Personal Loan' ? 0 : initialLoanType === 'Car Loan' ? 1200000 : 6500000,
+    requiredLoanAmount: defaultLoanType === 'Personal Loan' ? 500000 : defaultLoanType === 'Car Loan' ? 1000000 : 5000000,
+    propertyValue: defaultLoanType === 'Personal Loan' ? 0 : defaultLoanType === 'Car Loan' ? 1200000 : 6500000,
     propertyType: 'Apartment' as PropertyType,
     loanPurpose: 'Wedding / Personal',
     vehicleType: 'New Car',
@@ -115,10 +173,10 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
             Direct Consultation
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-[#0B1B3D] font-['Outfit']">
-            Home Loan Enquiry
+            {enquiryTitle}
           </h1>
           <p className="text-slate-600 text-sm max-w-xl mx-auto">
-            Submit your details below and a senior home loan advisor from our Bangalore office will contact you with tailored bank options.
+            Submit your details below and a senior {formData.loanType === 'Personal Loan' ? 'personal loan' : formData.loanType === 'Car Loan' ? 'car loan' : 'home loan'} advisor from our Bangalore office will contact you with tailored bank options.
           </p>
         </div>
 
@@ -240,16 +298,20 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
                     }}
                     className="w-full px-4 py-3 rounded-xl border-2 border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-bold text-[#0B1B3D] bg-amber-50/40"
                   >
-                    <optgroup label="🏠 Home Loans">
-                      <option value="Home Purchase Loan">Home Purchase Loan (New / Resale)</option>
-                      <option value="Home Construction Loan">Home Construction Loan</option>
-                      <option value="Home Loan Balance Transfer">Home Loan Balance Transfer</option>
-                      <option value="Home Loan Top-Up">Home Loan Top-Up</option>
-                    </optgroup>
-                    <optgroup label="⚡ Personal & Auto Financing">
-                      <option value="Personal Loan">Personal Loan (Instant, Paperless - Up to ₹40L)</option>
-                      <option value="Car Loan">Car Loan (New Car, Used Car & EV - Up to 100% On-Road)</option>
-                    </optgroup>
+                    {homeTypeOptions.length > 0 && (
+                      <optgroup label="🏠 Home Loans">
+                        {homeTypeOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {otherTypeOptions.length > 0 && (
+                      <optgroup label="⚡ Personal & Auto Financing">
+                        {otherTypeOptions.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </optgroup>
+                    )}
                   </select>
                 </div>
 
@@ -532,7 +594,7 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
                 </button>
 
                 <p className="text-[11px] text-center text-slate-400">
-                  By submitting, you authorize BLR15 to contact you regarding your home loan requirement. We respect your privacy and do not spam.
+                  By submitting, you authorize BLR15 to contact you regarding your {formData.loanType === 'Personal Loan' ? 'personal loan' : formData.loanType === 'Car Loan' ? 'car loan' : 'home loan'} requirement. We respect your privacy and do not spam.
                 </p>
               </div>
 
