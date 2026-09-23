@@ -1,5 +1,21 @@
 import { HomeLoanEnquiry } from '../types';
 
+/**
+ * The backend API is the PHP application in /api (PHPMailer based).
+ * Paths are intentionally relative so the SPA works both at the domain root
+ * and inside a sub-directory (e.g. XAMPP http://localhost/BLR15/).
+ */
+const API_BASE = 'api';
+
+async function apiFetch(route: string, init?: RequestInit): Promise<Response> {
+  let response = await fetch(`${API_BASE}/${route}`, init);
+  if (response.status === 404) {
+    // Fallback for servers without URL rewriting: hit the front controller directly.
+    response = await fetch(`${API_BASE}/index.php?route=${encodeURIComponent(route)}`, init);
+  }
+  return response;
+}
+
 export interface EmailDispatchResult {
   success: boolean;
   isSimulated?: boolean;
@@ -26,7 +42,7 @@ export interface SmtpConfigResponse {
  */
 export async function sendEnquiryEmailViaSmtp(enquiry: HomeLoanEnquiry): Promise<EmailDispatchResult> {
   try {
-    const response = await fetch('/api/send-enquiry-email', {
+    const response = await apiFetch('send-enquiry-email', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -66,7 +82,7 @@ export async function sendEnquiryEmailViaSmtp(enquiry: HomeLoanEnquiry): Promise
  */
 export async function getSmtpConfigStatus(): Promise<SmtpConfigResponse | null> {
   try {
-    const response = await fetch('/api/smtp-config');
+    const response = await apiFetch('smtp-config');
     if (!response.ok) return null;
     return await response.json();
   } catch (e) {
@@ -87,7 +103,7 @@ export async function saveSmtpSettings(config: {
   adminEmail: string;
 }): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    const response = await fetch('/api/save-smtp-config', {
+    const response = await apiFetch('save-smtp-config', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
@@ -111,7 +127,7 @@ export async function testSmtpConnection(payload: {
   toEmail: string;
 }): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    const response = await fetch('/api/test-smtp', {
+    const response = await apiFetch('test-smtp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),

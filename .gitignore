@@ -6,3 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Runtime SMTP config (contains password) shared by server.ts and /api
+.smtp-config.json

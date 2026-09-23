@@ -1,0 +1,14 @@
+RewriteEngine On
+
+# Deny direct access to composer files
+<FilesMatch "composer\.(json|lock)$">
+  Require all denied
+</FilesMatch>
+
+# Deny access to the vendored dependencies
+RewriteRule ^vendor/ - [F]
+
+# Route extensionless API calls (/api/<route>) to the front controller
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]
