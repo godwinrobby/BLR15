@@ -56,7 +56,7 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onSwitchView }) => {
               </li>
               <li>
                 <button
-                  onClick={() => onNavigate('loans')}
+                  onClick={() => onNavigate('home-loans')}
                   className="hover:text-amber-400 transition-colors text-slate-300 flex items-center gap-1.5"
                 >
                   <span className="text-amber-400">›</span> Home Loan Products

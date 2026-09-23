@@ -37,7 +37,7 @@ interface MobileAppViewProps {
 }
 
 export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) => {
-  const [activeTab, setActiveTab] = useState<'home' | 'loans' | 'eligibility' | 'enquiry' | 'profile'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'home-loans' | 'eligibility' | 'enquiry' | 'profile'>('home');
   const [isPhoneFrame, setIsPhoneFrame] = useState(true);
 
   // Mobile Eligibility 5-screen flow states
@@ -251,13 +251,13 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
               {/* Quick Actions Grid */}
               <div className="px-4 grid grid-cols-2 gap-2.5">
                 <button
-                  onClick={() => setActiveTab('loans')}
+                  onClick={() => setActiveTab('home-loans')}
                   className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col items-start gap-1.5 hover:border-amber-400 transition-colors text-left"
                 >
                   <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
                     <Building className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-900 font-['Outfit']">Loans</span>
+                  <span className="text-xs font-bold text-slate-900 font-['Outfit']">Home Loans</span>
                   <span className="text-[10px] text-slate-500">Multiple Loan Types</span>
                 </button>
 
@@ -398,7 +398,7 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
           )}
 
           {/* TAB 2: HOME LOANS */}
-          {activeTab === 'loans' && (
+          {activeTab === 'home-loans' && (
             <div className="p-4 space-y-3">
               <div className="mb-2">
                 <h2 className="text-lg font-black text-[#0B1B3D] font-['Outfit']">
@@ -1066,15 +1066,13 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
           </button>
 
           <button
-            onClick={() => setActiveTab('loans')}
+            onClick={() => setActiveTab('home-loans')}
             className={`flex flex-col items-center py-1 px-2 rounded-lg transition-colors ${
-              activeTab === 'loans' ? 'text-[#0B1B3D]' : 'text-slate-400 hover:text-slate-600'
+              activeTab === 'home-loans' ? 'text-[#0B1B3D]' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            <Building className="w-5 h-5" strokeWidth={activeTab === 'loans' ? 2.5 : 2} />
-            <span className={`text-[10px] ${activeTab === 'loans' ? 'font-bold text-amber-600' : 'font-medium'}`}>
-              Loans
-            </span>
+            <Building className="w-5 h-5" strokeWidth={activeTab === 'home-loans' ? 2.5 : 2} />
+            <span className={`text-[10px] ${activeTab === 'home-loans' ? 'font-bold text-amber-600' : 'font-medium'}`}>Home Loans</span>
           </button>
 
           <button

@@ -23,16 +23,16 @@ import { LoanType } from '../../types';
 interface HomeLoansPageProps {
   onNavigate: (tab: string, state?: any) => void;
   onOpenEnquiry: (loanType?: string) => void;
-  initialCategory?: 'all' | 'home' | 'personal' | 'car';
+  initialCategory?: 'home' | 'personal' | 'car';
 }
 
 export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
   onNavigate,
   onOpenEnquiry,
-  initialCategory = 'all',
+  initialCategory = 'home',
 }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
-  const [selectedCategory, setSelectedCategory] = useState<'all' | 'home' | 'personal' | 'car'>(initialCategory);
+  const [selectedCategory, setSelectedCategory] = useState<'home' | 'personal' | 'car'>(initialCategory);
 
   React.useEffect(() => {
     if (initialCategory) {
@@ -237,7 +237,7 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
             Comprehensive Financing Options
           </span>
           <h1 className="text-4xl sm:text-5xl font-black font-['Outfit'] tracking-tight">
-            Home Loans Made Simple
+            {selectedCategory === 'home' ? 'Home Loans Made Simple' : selectedCategory === 'personal' ? 'Personal Loans Made Simple' : 'Car Loans Made Simple'}
           </h1>
           <p className="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto">
             Find a home loan solution suited to your financial requirements. We navigate banking procedures so you can focus on building your home.
@@ -266,31 +266,11 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
       <section className="py-16 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto space-y-8">
 
-          {/* Category Filter Tabs */}
-          <div className="flex items-center justify-center gap-2 flex-wrap">
-            {[
-              { id: 'all', label: 'All Financing Options' },
-              { id: 'home', label: 'Home Loans (4)' },
-              { id: 'personal', label: 'Personal Loan (Instant)' },
-              { id: 'car', label: 'Car Loan (New & EV)' },
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setSelectedCategory(tab.id as any)}
-                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
-                  selectedCategory === tab.id
-                    ? 'bg-[#0B1B3D] text-amber-400 shadow-md shadow-[#0B1B3D]/20 scale-105'
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+
 
           <div className="space-y-12">
             {loanProducts
-              .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
+              .filter(p => p.category === selectedCategory)
               .map((prod, idx) => {
                 const Icon = prod.icon;
                 const isEven = idx % 2 === 0;

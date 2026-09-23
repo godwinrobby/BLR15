@@ -48,7 +48,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navLinks = [
     { id: 'home', label: 'Home' },
-    { id: 'loans', label: 'Home Loan', icon: Home },
+    { id: 'home-loans', label: 'Home Loans', icon: Home },
     { id: 'personal-loan', label: 'Personal Loan', icon: Wallet, badge: 'Instant' },
     { id: 'car-loan', label: 'Car loans', icon: Car, badge: 'New & EV' },
     { id: 'calculator', label: 'EMI Calculator', icon: Calculator },

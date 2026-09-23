@@ -51,8 +51,8 @@ function getRouteFromLocation(): { viewMode: 'website' | 'mobile-app' | 'admin';
   const validTabs: Record<string, string> = {
     '': 'home',
     'home': 'home',
-    'loans': 'loans',
-    'home-loans': 'loans',
+    'loans': 'home-loans',
+    'home-loans': 'home-loans',
     'personal-loan': 'personal-loan',
     'personal-loans': 'personal-loan',
     'car-loan': 'car-loan',
@@ -107,7 +107,7 @@ export function App() {
     } else {
       const slugMap: Record<string, string> = {
         home: '',
-        loans: 'loans',
+        loans: 'home-loans',
         calculator: 'calculator',
         eligibility: 'eligibility',
         enquiry: 'enquiry',
@@ -225,7 +225,7 @@ export function App() {
           />
         )}
 
-        {(activeTab === 'loans' || activeTab === 'personal-loan' || activeTab === 'car-loan') && (
+        {(activeTab === 'home-loans' || activeTab === 'personal-loan' || activeTab === 'car-loan') && (
           <HomeLoansPage
             onNavigate={handleNavigate}
             onOpenEnquiry={handleOpenEnquiry}

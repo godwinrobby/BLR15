@@ -82,7 +82,7 @@ export const ROUTE_SEO: Record<string, PageSEO> = {
     title: 'Home Loan Products in Bangalore – Purchase, Construction & Balance Transfer | BLR15',
     description: 'Explore home loan options with BLR15: Home Purchase, Self-Construction, Balance Transfer & Top-Up loans starting from 8.35% p.a. Check criteria and required documents.',
     keywords: 'home purchase loan bangalore, plot construction loan, balance transfer home loan, home loan top up, low interest home loan bangalore 560015',
-    canonicalPath: '/loans',
+    canonicalPath: '/home-loans',
     ogType: 'website',
     structuredData: {
       '@context': 'https://schema.org',

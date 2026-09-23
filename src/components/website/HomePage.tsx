@@ -507,7 +507,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry })
 
           <div className="mt-12 text-center">
             <button
-              onClick={() => onNavigate('loans')}
+              onClick={() => onNavigate('home-loans')}
               className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white border border-slate-300 font-bold text-sm text-[#0B1B3D] hover:bg-slate-50 hover:border-slate-400 shadow-xs transition-colors"
             >
               <span>View Detailed Loan Types & Criteria</span>
