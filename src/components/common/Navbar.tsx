@@ -52,8 +52,6 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'personal-loan', label: 'Personal Loan', icon: Wallet },
     { id: 'car-loan', label: 'Car loans', icon: Car },
     { id: 'calculator', label: 'EMI Calculator', icon: Calculator },
-    { id: 'about', label: 'About Us' },
-    { id: 'contact', label: 'Contact' },
   ];
 
   return (
