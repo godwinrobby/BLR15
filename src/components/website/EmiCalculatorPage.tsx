@@ -20,7 +20,10 @@ import {
   Zap,
   ArrowUpRight,
   Layers,
-  FileText
+  FileText,
+  Car,
+  Wallet,
+  Home,
 } from 'lucide-react';
 import { calculateHomeLoanEmi, formatINR } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
@@ -39,6 +42,9 @@ interface YearSchedule {
 }
 
 export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate }) => {
+  // Loan Category
+  const [calculatorType, setCalculatorType] = useState<'home' | 'personal' | 'car'>('home');
+
   // Main loan inputs
   const [loanAmount, setLoanAmount] = useState<number>(5000000); // 50 Lakhs default
   const [interestRate, setInterestRate] = useState<number>(8.5); // 8.5% default
@@ -54,13 +60,31 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [copiedLink, setCopiedLink] = useState<boolean>(false);
 
-  // Quick Loan Presets
-  const presets = [
-    { label: 'Starter (₹30L)', amount: 3000000, rate: 8.5, tenure: 20 },
-    { label: 'Popular (₹50L)', amount: 5000000, rate: 8.5, tenure: 20 },
-    { label: 'Premium (₹75L)', amount: 7500000, rate: 8.4, tenure: 25 },
-    { label: 'Luxury (₹1.2Cr)', amount: 12000000, rate: 8.35, tenure: 25 },
-  ];
+  // Quick Loan Presets per Category
+  const presets = useMemo(() => {
+    if (calculatorType === 'personal') {
+      return [
+        { label: 'Starter (₹1L)', amount: 100000, rate: 11.5, tenure: 2 },
+        { label: 'Popular (₹3L)', amount: 300000, rate: 11.0, tenure: 3 },
+        { label: 'Wedding / Med (₹5L)', amount: 500000, rate: 10.75, tenure: 4 },
+        { label: 'Executive (₹10L)', amount: 1000000, rate: 10.49, tenure: 5 },
+      ];
+    }
+    if (calculatorType === 'car') {
+      return [
+        { label: 'Hatchback (₹6L)', amount: 600000, rate: 8.85, tenure: 5 },
+        { label: 'Sedan / SUV (₹12L)', amount: 1200000, rate: 8.75, tenure: 6 },
+        { label: 'EV Special (₹18L)', amount: 1800000, rate: 8.45, tenure: 7 },
+        { label: 'Luxury (₹30L)', amount: 3000000, rate: 8.65, tenure: 7 },
+      ];
+    }
+    return [
+      { label: 'Starter (₹30L)', amount: 3000000, rate: 8.5, tenure: 20 },
+      { label: 'Popular (₹50L)', amount: 5000000, rate: 8.5, tenure: 20 },
+      { label: 'Premium (₹75L)', amount: 7500000, rate: 8.4, tenure: 25 },
+      { label: 'Luxury (₹1.2Cr)', amount: 12000000, rate: 8.35, tenure: 25 },
+    ];
+  }, [calculatorType]);
 
   // Calculate Base EMI
   const baseCalc = useMemo(() => {
@@ -159,18 +183,49 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
     setTenureYears(p.tenure);
   };
 
+  // Switch loan category
+  const handleSwitchCategory = (type: 'home' | 'personal' | 'car') => {
+    setCalculatorType(type);
+    if (type === 'personal') {
+      setLoanAmount(500000);
+      setInterestRate(11.0);
+      setTenureYears(3);
+    } else if (type === 'car') {
+      setLoanAmount(1000000);
+      setInterestRate(8.75);
+      setTenureYears(5);
+    } else {
+      setLoanAmount(5000000);
+      setInterestRate(8.5);
+      setTenureYears(20);
+    }
+    setExtraPrepaymentPerYear(0);
+    setMonthlyExtraEmi(0);
+  };
+
   // Reset inputs
   const handleReset = () => {
-    setLoanAmount(5000000);
-    setInterestRate(8.5);
-    setTenureYears(20);
+    if (calculatorType === 'personal') {
+      setLoanAmount(500000);
+      setInterestRate(11.0);
+      setTenureYears(3);
+    } else if (calculatorType === 'car') {
+      setLoanAmount(1000000);
+      setInterestRate(8.75);
+      setTenureYears(5);
+    } else {
+      setLoanAmount(5000000);
+      setInterestRate(8.5);
+      setTenureYears(20);
+    }
     setExtraPrepaymentPerYear(0);
     setMonthlyExtraEmi(0);
   };
 
   // Share calculation
   const handleShare = () => {
-    const text = `BLR15 Home Loan Estimate: Loan ₹${loanAmount / 100000} Lakhs @ ${interestRate}% for ${tenureYears} Yrs = EMI ₹${baseCalc.emi.toLocaleString('en-IN')}/mo. Check your eligibility at BLR15 Home Loans!`;
+    const loanName = calculatorType === 'personal' ? 'Personal Loan' : calculatorType === 'car' ? 'Car Loan' : 'Home Loan';
+    const text = `BLR15 ${loanName} Estimate: Loan ₹${loanAmount / 100000} Lakhs @ ${interestRate}% for ${tenureYears} Yrs = EMI ₹${baseCalc.emi.toLocaleString('en-IN')}/mo. Check your eligibility at BLR15!`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(text);
       setCopiedLink(true);
@@ -180,19 +235,72 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6">
-      <div className="max-w-6xl mx-auto space-y-10">
+      <div className="max-w-6xl mx-auto space-y-8">
         
+        {/* Loan Category Selector Tabs */}
+        <div className="flex items-center justify-center">
+          <div className="inline-flex p-1.5 rounded-2xl bg-white border border-slate-200 shadow-xs gap-1">
+            <button
+              onClick={() => handleSwitchCategory('home')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                calculatorType === 'home'
+                  ? 'bg-[#0B1B3D] text-amber-400 shadow-md'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Home className="w-4 h-4" />
+              <span>Home Loan EMI</span>
+            </button>
+            <button
+              onClick={() => handleSwitchCategory('personal')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                calculatorType === 'personal'
+                  ? 'bg-[#0B1B3D] text-amber-400 shadow-md'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Wallet className="w-4 h-4" />
+              <span>Personal Loan EMI</span>
+            </button>
+            <button
+              onClick={() => handleSwitchCategory('car')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer ${
+                calculatorType === 'car'
+                  ? 'bg-[#0B1B3D] text-amber-400 shadow-md'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Car className="w-4 h-4" />
+              <span>Car Loan EMI</span>
+            </button>
+          </div>
+        </div>
+
         {/* Header Section with Badges */}
         <div className="text-center space-y-3">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-100 text-amber-950 text-xs font-bold uppercase tracking-wider shadow-xs">
             <Calculator className="w-3.5 h-3.5 text-amber-600" />
-            <span>Interactive Financial Planner • Bangalore 560015</span>
+            <span>
+              {calculatorType === 'personal'
+                ? 'Instant Paperless Personal Loan Calculator'
+                : calculatorType === 'car'
+                ? 'Auto & EV Financing Calculator'
+                : 'Interactive Home Loan Financial Planner'}
+            </span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-[#0B1B3D] font-['Outfit'] tracking-tight">
-            Home Loan EMI Calculator
+            {calculatorType === 'personal'
+              ? 'Personal Loan EMI Calculator'
+              : calculatorType === 'car'
+              ? 'Car Loan EMI Calculator'
+              : 'Home Loan EMI Calculator'}
           </h1>
           <p className="text-slate-600 text-sm sm:text-base max-w-2xl mx-auto">
-            Accurately calculate your monthly EMI, visualize total interest liability, simulate pre-payment interest savings, and inspect your full amortization schedule.
+            {calculatorType === 'personal'
+              ? 'Estimate your monthly installments for collateral-free personal loans across leading banks & NBFCs in Bangalore. Zero processing hassles.'
+              : calculatorType === 'car'
+              ? 'Calculate your monthly payments for new cars, certified pre-owned vehicles, or electric vehicles with up to 100% on-road funding.'
+              : 'Accurately calculate your monthly EMI, visualize total interest liability, simulate pre-payment interest savings, and inspect your full amortization schedule.'}
           </p>
 
           {/* Quick Presets Bar */}
@@ -245,11 +353,11 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
                       <span className="text-slate-400 font-bold text-sm">₹</span>
                       <input
                         type="number"
-                        min={500000}
-                        max={50000000}
-                        step={100000}
+                        min={calculatorType === 'personal' ? 50000 : calculatorType === 'car' ? 200000 : 500000}
+                        max={calculatorType === 'personal' ? 4000000 : calculatorType === 'car' ? 10000000 : 50000000}
+                        step={calculatorType === 'personal' ? 25000 : calculatorType === 'car' ? 50000 : 100000}
                         value={loanAmount}
-                        onChange={e => setLoanAmount(Math.max(100000, Number(e.target.value)))}
+                        onChange={e => setLoanAmount(Math.max(10000, Number(e.target.value)))}
                         className="w-28 text-right font-extrabold text-[#0B1B3D] text-base font-['Outfit'] focus:outline-hidden"
                       />
                     </div>
@@ -261,23 +369,28 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
 
                 <input
                   type="range"
-                  min={500000}
-                  max={30000000}
-                  step={100000}
+                  min={calculatorType === 'personal' ? 50000 : calculatorType === 'car' ? 200000 : 500000}
+                  max={calculatorType === 'personal' ? 4000000 : calculatorType === 'car' ? 10000000 : 30000000}
+                  step={calculatorType === 'personal' ? 25000 : calculatorType === 'car' ? 50000 : 100000}
                   value={loanAmount}
                   onChange={e => setLoanAmount(Number(e.target.value))}
                   className="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
                 />
 
                 <div className="flex justify-between text-[11px] text-slate-400 font-medium">
-                  <span>₹5 Lakhs</span>
-                  <span>₹1.5 Crores</span>
-                  <span>₹3 Crores</span>
+                  <span>{calculatorType === 'personal' ? '₹50 Thousand' : calculatorType === 'car' ? '₹2 Lakhs' : '₹5 Lakhs'}</span>
+                  <span>{calculatorType === 'personal' ? '₹20 Lakhs' : calculatorType === 'car' ? '₹50 Lakhs' : '₹1.5 Crores'}</span>
+                  <span>{calculatorType === 'personal' ? '₹40 Lakhs' : calculatorType === 'car' ? '₹1 Crore' : '₹3 Crores'}</span>
                 </div>
 
                 {/* Quick amount chips */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {[2500000, 4000000, 6000000, 8000000, 10000000].map(amt => (
+                  {(calculatorType === 'personal'
+                    ? [100000, 250000, 500000, 1000000, 2000000]
+                    : calculatorType === 'car'
+                    ? [500000, 800000, 1200000, 1800000, 2500000]
+                    : [2500000, 4000000, 6000000, 8000000, 10000000]
+                  ).map(amt => (
                     <button
                       key={amt}
                       onClick={() => setLoanAmount(amt)}
@@ -307,8 +420,8 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
 
                 <input
                   type="range"
-                  min={7.5}
-                  max={15.0}
+                  min={calculatorType === 'personal' ? 10.0 : calculatorType === 'car' ? 8.0 : 7.5}
+                  max={calculatorType === 'personal' ? 22.0 : calculatorType === 'car' ? 16.0 : 15.0}
                   step={0.05}
                   value={interestRate}
                   onChange={e => setInterestRate(Number(e.target.value))}
@@ -316,19 +429,34 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
                 />
 
                 <div className="flex justify-between text-[11px] text-slate-400 font-medium">
-                  <span>7.5% (Prime Tier-1)</span>
-                  <span>8.5% (Average)</span>
-                  <span>15.0%</span>
+                  <span>{calculatorType === 'personal' ? '10.0% (Prime)' : calculatorType === 'car' ? '8.0% (EV Special)' : '7.5% (Prime Tier-1)'}</span>
+                  <span>{calculatorType === 'personal' ? '14.0% (Average)' : calculatorType === 'car' ? '10.5% (Standard)' : '8.5% (Average)'}</span>
+                  <span>{calculatorType === 'personal' ? '22.0%' : calculatorType === 'car' ? '16.0%' : '15.0%'}</span>
                 </div>
 
                 {/* Rate shortcut benchmark chips */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {[
-                    { label: '8.35% (SBI/HDFC)', rate: 8.35 },
-                    { label: '8.50% (Standard)', rate: 8.5 },
-                    { label: '8.75% (Co-op/NBFC)', rate: 8.75 },
-                    { label: '9.25% (Top-Up)', rate: 9.25 },
-                  ].map(r => (
+                  {(calculatorType === 'personal'
+                    ? [
+                        { label: '10.49% (Top Tier)', rate: 10.49 },
+                        { label: '11.00% (Standard)', rate: 11.0 },
+                        { label: '12.50% (Instant)', rate: 12.5 },
+                        { label: '14.00% (NBFC)', rate: 14.0 },
+                      ]
+                    : calculatorType === 'car'
+                    ? [
+                        { label: '8.45% (EV Green)', rate: 8.45 },
+                        { label: '8.75% (New Car)', rate: 8.75 },
+                        { label: '9.25% (Pre-Owned)', rate: 9.25 },
+                        { label: '10.50% (Commercial)', rate: 10.5 },
+                      ]
+                    : [
+                        { label: '8.35% (SBI/HDFC)', rate: 8.35 },
+                        { label: '8.50% (Standard)', rate: 8.5 },
+                        { label: '8.75% (Co-op/NBFC)', rate: 8.75 },
+                        { label: '9.25% (Top-Up)', rate: 9.25 },
+                      ]
+                  ).map(r => (
                     <button
                       key={r.label}
                       onClick={() => setInterestRate(r.rate)}
@@ -359,7 +487,7 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
                 <input
                   type="range"
                   min={1}
-                  max={30}
+                  max={calculatorType === 'personal' ? 5 : calculatorType === 'car' ? 8 : 30}
                   step={1}
                   value={tenureYears}
                   onChange={e => setTenureYears(Number(e.target.value))}
@@ -368,13 +496,18 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
 
                 <div className="flex justify-between text-[11px] text-slate-400 font-medium">
                   <span>1 Year</span>
-                  <span>15 Years</span>
-                  <span>30 Years</span>
+                  <span>{calculatorType === 'personal' ? '3 Years' : calculatorType === 'car' ? '4 Years' : '15 Years'}</span>
+                  <span>{calculatorType === 'personal' ? '5 Years (Max)' : calculatorType === 'car' ? '8 Years (Max)' : '30 Years (Max)'}</span>
                 </div>
 
                 {/* Quick Tenure Buttons */}
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {[5, 10, 15, 20, 25, 30].map(yr => (
+                  {(calculatorType === 'personal'
+                    ? [1, 2, 3, 4, 5]
+                    : calculatorType === 'car'
+                    ? [2, 3, 4, 5, 6, 7, 8]
+                    : [5, 10, 15, 20, 25, 30]
+                  ).map(yr => (
                     <button
                       key={yr}
                       onClick={() => setTenureYears(yr)}
@@ -541,7 +674,17 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
               {/* Action Buttons */}
               <div className="pt-6 space-y-2.5">
                 <button
-                  onClick={() => onNavigate('eligibility', { loanAmount })}
+                  onClick={() =>
+                    onNavigate('eligibility', {
+                      loanAmount,
+                      loanType:
+                        calculatorType === 'personal'
+                          ? 'Personal Loan'
+                          : calculatorType === 'car'
+                          ? 'Car Loan'
+                          : 'Home Purchase Loan',
+                    })
+                  }
                   className="w-full py-3.5 px-4 rounded-xl font-black text-sm bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 hover:from-amber-300 hover:to-amber-400 text-slate-950 shadow-lg shadow-amber-500/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <FileCheck className="w-4 h-4 stroke-[2.5]" />
@@ -550,7 +693,17 @@ export const EmiCalculatorPage: React.FC<EmiCalculatorPageProps> = ({ onNavigate
                 </button>
 
                 <button
-                  onClick={() => onNavigate('enquiry', { loanAmount })}
+                  onClick={() =>
+                    onNavigate('enquiry', {
+                      loanAmount,
+                      loanType:
+                        calculatorType === 'personal'
+                          ? 'Personal Loan'
+                          : calculatorType === 'car'
+                          ? 'Car Loan'
+                          : 'Home Purchase Loan',
+                    })
+                  }
                   className="w-full py-2.5 px-4 rounded-xl font-bold text-xs bg-white/10 hover:bg-white/15 text-white border border-white/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <span>Apply Directly / Get Advisor Callback</span>

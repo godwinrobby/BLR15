@@ -9,8 +9,9 @@ import {
   Sparkles,
   Search,
   MessageCircle,
+  Mail,
 } from 'lucide-react';
-import { EmploymentType, PropertyType, HomeLoanEnquiry } from '../../types';
+import { EmploymentType, PropertyType, HomeLoanEnquiry, LoanType } from '../../types';
 import { createEnquiry, formatINR } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
 
@@ -31,10 +32,13 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
     email: '',
     city: 'Bangalore',
     employmentType: 'Salaried' as EmploymentType,
+    loanType: (initialLoanType as LoanType) || 'Home Purchase Loan',
     monthlyIncome: 125000,
-    requiredLoanAmount: 5000000,
-    propertyValue: 6500000,
+    requiredLoanAmount: initialLoanType === 'Personal Loan' ? 500000 : initialLoanType === 'Car Loan' ? 1000000 : 5000000,
+    propertyValue: initialLoanType === 'Personal Loan' ? 0 : initialLoanType === 'Car Loan' ? 1200000 : 6500000,
     propertyType: 'Apartment' as PropertyType,
+    loanPurpose: 'Wedding / Personal',
+    vehicleType: 'New Car',
     message: '',
   });
 
@@ -76,7 +80,12 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
         propertyValue: Number(formData.propertyValue),
         propertyType: formData.propertyType,
         propertyLocation: `${formData.city} Area`,
-        loanType: (initialLoanType as any) || 'Home Purchase Loan',
+        loanType: formData.loanType,
+        internalRemarks: formData.loanType === 'Personal Loan'
+          ? `Purpose: ${formData.loanPurpose}`
+          : formData.loanType === 'Car Loan'
+          ? `Vehicle Type: ${formData.vehicleType}`
+          : undefined,
         message: formData.message,
         source: 'Website Form',
         status: 'New',
@@ -143,6 +152,21 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
               </p>
             </div>
 
+            {/* Email Dispatch Notice */}
+            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-left flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-amber-500 text-slate-950 shrink-0 mt-0.5">
+                <Mail className="w-4 h-4" />
+              </div>
+              <div className="space-y-0.5 text-xs text-slate-700">
+                <p className="font-bold text-[#0B1B3D]">
+                  Official Confirmation Dispatched
+                </p>
+                <p className="text-[11px] text-slate-600">
+                  A detailed loan enquiry summary has been sent to <strong className="text-[#0B1B3D]">{submittedEnquiry.email}</strong>. Our dedicated loan officer will review your requirements shortly.
+                </p>
+              </div>
+            </div>
+
             {/* Quick Actions */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
@@ -186,6 +210,49 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
             <form onSubmit={handleSubmit} className="space-y-6">
               
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                {/* Loan Category & Type */}
+                <div className="space-y-1.5 sm:col-span-2">
+                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                    Select Loan Category & Type *
+                  </label>
+                  <select
+                    value={formData.loanType}
+                    onChange={e => {
+                      const newType = e.target.value as LoanType;
+                      let newAmount = formData.requiredLoanAmount;
+                      let newPropVal = formData.propertyValue;
+                      if (newType === 'Personal Loan') {
+                        newAmount = 500000;
+                        newPropVal = 0;
+                      } else if (newType === 'Car Loan') {
+                        newAmount = 1000000;
+                        newPropVal = 1300000;
+                      } else if (formData.loanType === 'Personal Loan' || formData.loanType === 'Car Loan') {
+                        newAmount = 5000000;
+                        newPropVal = 6500000;
+                      }
+                      setFormData({
+                        ...formData,
+                        loanType: newType,
+                        requiredLoanAmount: newAmount,
+                        propertyValue: newPropVal,
+                      });
+                    }}
+                    className="w-full px-4 py-3 rounded-xl border-2 border-amber-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-bold text-[#0B1B3D] bg-amber-50/40"
+                  >
+                    <optgroup label="🏠 Home Loans">
+                      <option value="Home Purchase Loan">Home Purchase Loan (New / Resale)</option>
+                      <option value="Home Construction Loan">Home Construction Loan</option>
+                      <option value="Home Loan Balance Transfer">Home Loan Balance Transfer</option>
+                      <option value="Home Loan Top-Up">Home Loan Top-Up</option>
+                    </optgroup>
+                    <optgroup label="⚡ Personal & Auto Financing">
+                      <option value="Personal Loan">Personal Loan (Instant, Paperless - Up to ₹40L)</option>
+                      <option value="Car Loan">Car Loan (New Car, Used Car & EV - Up to 100% On-Road)</option>
+                    </optgroup>
+                  </select>
+                </div>
+
                 {/* Name */}
                 <div className="space-y-1.5 sm:col-span-2">
                   <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
@@ -296,54 +363,147 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
                   </div>
                   <input
                     type="number"
-                    min={500000}
-                    step={100000}
+                    min={formData.loanType === 'Personal Loan' ? 50000 : formData.loanType === 'Car Loan' ? 100000 : 500000}
+                    max={formData.loanType === 'Personal Loan' ? 4000000 : formData.loanType === 'Car Loan' ? 10000000 : 100000000}
+                    step={formData.loanType === 'Personal Loan' ? 25000 : formData.loanType === 'Car Loan' ? 50000 : 100000}
                     required
                     value={formData.requiredLoanAmount}
                     onChange={e => setFormData({ ...formData, requiredLoanAmount: Number(e.target.value) })}
                     className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-semibold"
                   />
+                  {formData.loanType === 'Personal Loan' && (
+                    <span className="text-[11px] text-slate-400">Max unsecured limit: ₹40,00,000</span>
+                  )}
+                  {formData.loanType === 'Car Loan' && (
+                    <span className="text-[11px] text-slate-400">Up to 100% on-road funding</span>
+                  )}
                 </div>
 
-                {/* Property Value */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                      Property Value *
-                    </label>
-                    <span className="text-xs font-extrabold text-slate-600">
-                      {formatINR(formData.propertyValue)}
-                    </span>
-                  </div>
-                  <input
-                    type="number"
-                    min={500000}
-                    step={100000}
-                    required
-                    value={formData.propertyValue}
-                    onChange={e => setFormData({ ...formData, propertyValue: Number(e.target.value) })}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-semibold"
-                  />
-                </div>
+                {/* Contextual Second & Third Inputs */}
+                {formData.loanType === 'Personal Loan' ? (
+                  <>
+                    {/* Loan Purpose */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Loan Purpose *
+                      </label>
+                      <select
+                        value={formData.loanPurpose}
+                        onChange={e => setFormData({ ...formData, loanPurpose: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white font-medium"
+                      >
+                        <option value="Wedding / Family Function">Wedding / Family Function</option>
+                        <option value="Medical Emergency / Hospitalization">Medical Emergency</option>
+                        <option value="Home Renovation / Interior Design">Home Renovation & Interiors</option>
+                        <option value="Higher Education / Training">Higher Education</option>
+                        <option value="Vacation & Travel">Holiday & Travel</option>
+                        <option value="Debt Consolidation / Credit Cards">Debt Consolidation</option>
+                        <option value="Business / Urgent Working Capital">Business Working Capital</option>
+                        <option value="Other Personal Needs">Other Personal Needs</option>
+                      </select>
+                    </div>
 
-                {/* Property Type */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                    Property Type *
-                  </label>
-                  <select
-                    value={formData.propertyType}
-                    onChange={e => setFormData({ ...formData, propertyType: e.target.value as PropertyType })}
-                    className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
-                  >
-                    <option value="New House">New House</option>
-                    <option value="Resale House">Resale House</option>
-                    <option value="Apartment">Apartment</option>
-                    <option value="Villa">Villa</option>
-                    <option value="Plot + Construction">Plot + Construction</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
+                    {/* Preferred Tenure */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Preferred Tenure *
+                      </label>
+                      <select
+                        onChange={e => setFormData({ ...formData, message: `Preferred Tenure: ${e.target.value}. ${formData.message}` })}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
+                      >
+                        <option value="1 Year (12 Months)">1 Year (12 Months) - Fast Clearance</option>
+                        <option value="2 Years (24 Months)">2 Years (24 Months)</option>
+                        <option value="3 Years (36 Months)" selected>3 Years (36 Months) - Most Popular</option>
+                        <option value="4 Years (48 Months)">4 Years (48 Months)</option>
+                        <option value="5 Years (60 Months)">5 Years (60 Months) - Lowest EMI</option>
+                      </select>
+                    </div>
+                  </>
+                ) : formData.loanType === 'Car Loan' ? (
+                  <>
+                    {/* Vehicle On-Road Price */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Vehicle On-Road Price *
+                        </label>
+                        <span className="text-xs font-extrabold text-slate-600">
+                          {formatINR(formData.propertyValue)}
+                        </span>
+                      </div>
+                      <input
+                        type="number"
+                        min={300000}
+                        step={50000}
+                        required
+                        value={formData.propertyValue}
+                        onChange={e => setFormData({ ...formData, propertyValue: Number(e.target.value) })}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-semibold"
+                      />
+                    </div>
+
+                    {/* Vehicle Category */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Vehicle Category *
+                      </label>
+                      <select
+                        value={formData.vehicleType}
+                        onChange={e => setFormData({ ...formData, vehicleType: e.target.value })}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white font-medium"
+                      >
+                        <option value="New Car / SUV">New Car / SUV (Showroom Delivery)</option>
+                        <option value="Electric Vehicle (EV)">Electric Vehicle (EV) - Special Subsidized Rates</option>
+                        <option value="Certified Pre-Owned Car">Certified Pre-Owned / Used Car</option>
+                        <option value="Luxury Car">Luxury Sedan / Premium SUV</option>
+                        <option value="Commercial Vehicle">Commercial Passenger / Fleet Vehicle</option>
+                      </select>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Property Value */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                          Property Value *
+                        </label>
+                        <span className="text-xs font-extrabold text-slate-600">
+                          {formatINR(formData.propertyValue)}
+                        </span>
+                      </div>
+                      <input
+                        type="number"
+                        min={500000}
+                        step={100000}
+                        required
+                        value={formData.propertyValue}
+                        onChange={e => setFormData({ ...formData, propertyValue: Number(e.target.value) })}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-semibold"
+                      />
+                    </div>
+
+                    {/* Property Type */}
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Property Type *
+                      </label>
+                      <select
+                        value={formData.propertyType}
+                        onChange={e => setFormData({ ...formData, propertyType: e.target.value as PropertyType })}
+                        className="w-full px-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white"
+                      >
+                        <option value="New House">New House</option>
+                        <option value="Resale House">Resale House</option>
+                        <option value="Apartment">Apartment</option>
+                        <option value="Villa">Villa</option>
+                        <option value="Plot + Construction">Plot + Construction</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
+                  </>
+                )}
 
                 {/* Message */}
                 <div className="space-y-1.5 sm:col-span-2">

@@ -11,6 +11,7 @@ import {
   migrateAllDataToSupabase,
   mapSupabaseToEnquiry,
 } from './supabaseClient';
+import { sendEnquiryEmailViaSmtp } from './emailService';
 
 const ENQUIRIES_STORAGE_KEY = 'blr15_enquiries_v1';
 const STAFF_STORAGE_KEY = 'blr15_staff_v1';
@@ -90,6 +91,11 @@ export const createEnquiry = (enquiryData: Omit<HomeLoanEnquiry, 'id' | 'created
   // Push to Supabase asynchronously
   upsertEnquiryToSupabase(newEnquiry).catch(err => {
     console.warn('Asynchronous Supabase push deferred:', err);
+  });
+
+  // Send proper SMTP confirmation email to customer & alert to admin
+  sendEnquiryEmailViaSmtp(newEnquiry).catch(err => {
+    console.warn('Asynchronous SMTP email dispatch deferred:', err);
   });
 
   return newEnquiry;

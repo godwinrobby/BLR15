@@ -2,7 +2,9 @@ export type LoanType =
   | 'Home Purchase Loan'
   | 'Home Construction Loan'
   | 'Home Loan Balance Transfer'
-  | 'Home Loan Top-Up';
+  | 'Home Loan Top-Up'
+  | 'Personal Loan'
+  | 'Car Loan';
 
 export type EmploymentType = 
   | 'Salaried'

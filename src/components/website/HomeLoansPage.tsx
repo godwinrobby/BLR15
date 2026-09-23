@@ -14,22 +14,35 @@ import {
   FileText,
   Building2,
   AlertCircle,
+  Car,
+  Wallet,
+  Sparkles,
 } from 'lucide-react';
 import { LoanType } from '../../types';
 
 interface HomeLoansPageProps {
   onNavigate: (tab: string, state?: any) => void;
   onOpenEnquiry: (loanType?: string) => void;
+  initialCategory?: 'all' | 'home' | 'personal' | 'car';
 }
 
 export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
   onNavigate,
   onOpenEnquiry,
+  initialCategory = 'all',
 }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [selectedCategory, setSelectedCategory] = useState<'all' | 'home' | 'personal' | 'car'>(initialCategory);
+
+  React.useEffect(() => {
+    if (initialCategory) {
+      setSelectedCategory(initialCategory);
+    }
+  }, [initialCategory]);
 
   const loanProducts: {
     type: LoanType;
+    category: 'home' | 'personal' | 'car';
     icon: any;
     tag: string;
     subtitle: string;
@@ -43,6 +56,7 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
   }[] = [
     {
       type: 'Home Purchase Loan',
+      category: 'home',
       icon: Home,
       tag: 'New & Resale',
       subtitle: 'For purchasing a new or resale residential property',
@@ -67,6 +81,7 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
     },
     {
       type: 'Home Construction Loan',
+      category: 'home',
       icon: Hammer,
       tag: 'Self Build',
       subtitle: 'For constructing your own house',
@@ -91,6 +106,7 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
     },
     {
       type: 'Home Loan Balance Transfer',
+      category: 'home',
       icon: ArrowRightLeft,
       tag: 'Lower Your EMI',
       subtitle: 'For transferring an existing home loan',
@@ -115,6 +131,7 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
     },
     {
       type: 'Home Loan Top-Up',
+      category: 'home',
       icon: BadgePlus,
       tag: 'Extra Funding',
       subtitle: 'Additional funding for eligible existing borrowers',
@@ -125,7 +142,7 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
       maxLtv: 'Up to 75% total exposure',
       idealFor: 'Home interior design, modular kitchen, house expansion, or education.',
       highlights: [
-        'Rates significantly lower than personal loans (8.65% vs 14%+)',
+        'Rates significantly lower than unsecured personal loans (8.65% vs 14%+)',
         'Minimal additional documentation required for existing borrowers with clean repayment',
         'Flexible end-use (interiors, renovations, emergency, medical, wedding)',
         'Longer repayment tenure keeps monthly EMIs low and manageable',
@@ -134,6 +151,56 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
         'Track record of regular EMI payments for at least 6-12 months',
         'Latest salary slips / updated income statement',
         'Application form & KYC confirmation',
+      ],
+    },
+    {
+      type: 'Personal Loan',
+      category: 'personal',
+      icon: Wallet,
+      tag: 'Instant & Unsecured',
+      subtitle: 'Zero collateral required for any personal or emergency need',
+      description:
+        'Multi-purpose unsecured personal loan with rapid approval and quick disbursal. Ideal for weddings, medical emergencies, higher education, dream vacations, or high-interest debt consolidation without pledging any property or asset.',
+      rate: 'From 10.49% p.a.',
+      maxTenure: 'Up to 5 Years (60 Months)',
+      maxLtv: 'Up to ₹40 Lakhs',
+      idealFor: 'Salaried employees, IT professionals & self-employed individuals needing instant liquidity.',
+      highlights: [
+        '100% paperless processing with same-day sanction and fast disbursal',
+        'No collateral, guarantor, or property mortgage required',
+        'Flexible repayment tenure from 12 to 60 months with predictable EMIs',
+        'Direct partnerships with HDFC, ICICI, Axis, Tata Capital, and Bajaj Finserv',
+      ],
+      docs: [
+        'Aadhaar Card & PAN Card for digital e-KYC',
+        'Latest 3 months salary slips or Form 16',
+        'Last 6 months bank statement showing regular salary credits',
+        'Official company employee ID or business proof',
+      ],
+    },
+    {
+      type: 'Car Loan',
+      category: 'car',
+      icon: Car,
+      tag: 'New, Used & EV',
+      subtitle: 'Drive home your dream car or electric vehicle today',
+      description:
+        'Customized auto financing solutions for new sedans, luxury SUVs, family hatchbacks, green Electric Vehicles (EVs), or certified pre-owned cars in Bangalore. Avail high on-road funding with special dealer discount tie-ups.',
+      rate: 'From 8.75% p.a.',
+      maxTenure: 'Up to 7 - 8 Years',
+      maxLtv: 'Up to 100% On-Road Funding',
+      idealFor: 'Anyone looking to purchase a new or verified pre-owned car or EV in Bangalore.',
+      highlights: [
+        'Up to 100% on-road funding covering showroom price, road tax, and comprehensive insurance',
+        'Special subsidized interest rates for Electric Vehicles (EVs)',
+        'Pre-approved dealer tie-ups across Maruti, Hyundai, Tata, Mahindra, Toyota, Kia, Honda',
+        'Quick document pickup with doorstep test drive coordination',
+      ],
+      docs: [
+        'Vehicle proforma invoice or official dealer quotation',
+        'Latest 3 months salary slips / 2 years ITR with computation',
+        '6 months primary bank statement',
+        'KYC proof (Aadhaar, PAN, Driving License)',
       ],
     },
   ];
@@ -197,10 +264,36 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
 
       {/* Main Services List */}
       <section className="py-16 px-4 sm:px-6">
-        <div className="max-w-7xl mx-auto space-y-12">
-          {loanProducts.map((prod, idx) => {
-            const Icon = prod.icon;
-            const isEven = idx % 2 === 0;
+        <div className="max-w-7xl mx-auto space-y-8">
+
+          {/* Category Filter Tabs */}
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            {[
+              { id: 'all', label: 'All Financing Options' },
+              { id: 'home', label: 'Home Loans (4)' },
+              { id: 'personal', label: 'Personal Loan (Instant)' },
+              { id: 'car', label: 'Car Loan (New & EV)' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedCategory(tab.id as any)}
+                className={`px-5 py-2.5 rounded-full text-xs font-bold transition-all cursor-pointer ${
+                  selectedCategory === tab.id
+                    ? 'bg-[#0B1B3D] text-amber-400 shadow-md shadow-[#0B1B3D]/20 scale-105'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-12">
+            {loanProducts
+              .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
+              .map((prod, idx) => {
+                const Icon = prod.icon;
+                const isEven = idx % 2 === 0;
 
             return (
               <div
@@ -311,6 +404,7 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
               </div>
             );
           })}
+          </div>
         </div>
       </section>
 

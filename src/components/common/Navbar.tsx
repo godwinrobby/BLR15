@@ -10,6 +10,12 @@ import {
   Search,
   ArrowRight,
   Cloud,
+  Home,
+  Wallet,
+  Car,
+  Calculator,
+  PhoneCall,
+  Sparkles,
 } from 'lucide-react';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
 import { getStoredEnquiries } from '../../services/storageService';
@@ -42,11 +48,12 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   const navLinks = [
     { id: 'home', label: 'Home' },
-    { id: 'loans', label: 'Home Loans' },
-    { id: 'calculator', label: 'EMI Calculator' },
-    { id: 'eligibility', label: 'Eligibility Check' },
+    { id: 'loans', label: 'Home Loans', icon: Home },
+    { id: 'personal-loan', label: 'Personal Loan', icon: Wallet, badge: 'Instant' },
+    { id: 'car-loan', label: 'Car Loan', icon: Car, badge: 'New & EV' },
+    { id: 'calculator', label: 'EMI Calculator', icon: Calculator },
     { id: 'about', label: 'About Us' },
-    { id: 'contact', label: 'Contact Us' },
+    { id: 'contact', label: 'Contact' },
   ];
 
   return (
@@ -130,20 +137,25 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Desktop Nav Links */}
-          <nav className="hidden lg:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-5 xl:gap-7">
             {navLinks.map(link => {
               const isActive = currentTab === link.id;
               return (
                 <button
                   key={link.id}
                   onClick={() => onNavigate(link.id)}
-                  className={`text-sm font-semibold transition-all relative py-2 ${
+                  className={`text-sm font-semibold transition-all relative py-2 flex items-center gap-1.5 cursor-pointer ${
                     isActive
-                      ? 'text-[#0B1B3D]'
+                      ? 'text-[#0B1B3D] font-bold'
                       : 'text-slate-600 hover:text-[#0B1B3D]'
                   }`}
                 >
-                  {link.label}
+                  <span>{link.label}</span>
+                  {(link as any).badge && (
+                    <span className="text-[9px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-full shadow-xs">
+                      {(link as any).badge}
+                    </span>
+                  )}
                   {isActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />
                   )}
@@ -191,34 +203,45 @@ export const Navbar: React.FC<NavbarProps> = ({
       {isMobileMenuOpen && (
         <div className="lg:hidden bg-white border-b border-slate-200 px-4 pt-2 pb-6 space-y-3 shadow-xl animate-in slide-in-from-top duration-200">
           <div className="grid gap-1 pt-2">
-            {navLinks.map(link => (
-              <button
-                key={link.id}
-                onClick={() => {
-                  onNavigate(link.id);
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`w-full text-left px-4 py-3 rounded-lg text-base font-semibold transition-colors flex items-center justify-between ${
-                  currentTab === link.id
-                    ? 'bg-amber-50 text-[#0B1B3D] border-l-4 border-amber-500'
-                    : 'text-slate-700 hover:bg-slate-50'
-                }`}
-              >
-                <span>{link.label}</span>
-                <ArrowRight className="w-4 h-4 text-slate-400" />
-              </button>
-            ))}
+            {navLinks.map(link => {
+              const Icon = (link as any).icon;
+              return (
+                <button
+                  key={link.id}
+                  onClick={() => {
+                    onNavigate(link.id);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm font-semibold transition-colors flex items-center justify-between cursor-pointer ${
+                    currentTab === link.id
+                      ? 'bg-amber-50 text-[#0B1B3D] border-l-4 border-amber-500 font-bold'
+                      : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  <span className="flex items-center gap-2.5">
+                    {Icon && <Icon className="w-4 h-4 text-amber-600" />}
+                    <span>{link.label}</span>
+                    {(link as any).badge && (
+                      <span className="text-[9px] font-black uppercase bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-full">
+                        {(link as any).badge}
+                      </span>
+                    )}
+                  </span>
+                  <ArrowRight className="w-4 h-4 text-slate-400" />
+                </button>
+              );
+            })}
 
             <button
               onClick={() => {
                 onNavigate('track');
                 setIsMobileMenuOpen(false);
               }}
-              className="w-full text-left px-4 py-3 rounded-lg text-base font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between"
+              className="w-full text-left px-4 py-3 rounded-xl text-sm font-semibold text-slate-700 hover:bg-slate-50 flex items-center justify-between cursor-pointer"
             >
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2.5">
                 <Search className="w-4 h-4 text-amber-600" />
-                Track Enquiry Status
+                <span>Track Enquiry Status</span>
               </span>
               <ArrowRight className="w-4 h-4 text-slate-400" />
             </button>

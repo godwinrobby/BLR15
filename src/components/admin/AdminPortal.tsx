@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { BLR15Logo } from '../common/BLR15Logo';
 import { SupabaseManager } from './SupabaseManager';
+import { SmtpManager } from './SmtpManager';
 import {
   HomeLoanEnquiry,
   EnquiryStatus,
@@ -72,7 +73,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     active: true,
   });
 
-  const [activeSection, setActiveSection] = useState<'dashboard' | 'enquiries' | 'followups' | 'reports' | 'database' | 'settings'>('dashboard');
+  const [activeSection, setActiveSection] = useState<'dashboard' | 'enquiries' | 'followups' | 'reports' | 'database' | 'smtp' | 'settings'>('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Enquiries state
@@ -458,6 +459,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
               { id: 'followups', label: 'Follow-ups', icon: Clock, badge: followUpsCount > 0 ? followUpsCount : null, alertBadge: null },
               { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet, badge: null, alertBadge: null },
               { id: 'database', label: 'Supabase Cloud DB', icon: Database, badge: null, alertBadge: 'Live' },
+              { id: 'smtp', label: 'SMTP Email Delivery', icon: Mail, badge: null, alertBadge: 'Email' },
               { id: 'settings', label: 'Branch Settings', icon: SettingsIcon, badge: null, alertBadge: null },
             ].map(item => {
               const Icon = item.icon;
@@ -620,6 +622,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
                   {activeSection === 'followups' && 'Follow-up Scheduler & Pipeline'}
                   {activeSection === 'reports' && 'Reports & CSV Analytics Export'}
                   {activeSection === 'database' && 'Supabase Cloud Database & Data Migration'}
+                  {activeSection === 'smtp' && 'SMTP Automated Email Delivery & Lead Alerts'}
                   {activeSection === 'settings' && 'Branch & Company Settings'}
                 </h1>
                 <p className="text-[11px] text-slate-500 hidden sm:block">
@@ -1298,6 +1301,13 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
         {/* ==================================================== */}
         {activeSection === 'database' && (
           <SupabaseManager />
+        )}
+
+        {/* ==================================================== */}
+        {/* SMTP AUTOMATED EMAIL DELIVERY & SETTINGS */}
+        {/* ==================================================== */}
+        {activeSection === 'smtp' && (
+          <SmtpManager />
         )}
 
         {/* ==================================================== */}
