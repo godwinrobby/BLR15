@@ -280,25 +280,200 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
         </div>
       </section>
 
-      {/* SEO / CONTENT SECTION */}
-      <section className="max-w-6xl mx-auto px-4">
-        <div className="bg-white rounded-3xl p-8 border border-slate-200 prose prose-sm prose-slate max-w-none">
-          <h2 className="text-[#0B1B3D] text-xl font-bold mb-4">A Comprehensive Guide to Loans in India</h2>
-          <p>
-            When considering financing a large expense, whether it's buying a new home, renovating an existing property, or consolidating debt, understanding your loan options is crucial. A loan is a financial tool that allows you to borrow a specific amount of money from a lender, which you agree to pay back with interest over a set period. 
-          </p>
-          <h3 className="text-[#0B1B3D] text-lg font-bold mt-6 mb-3">Eligibility Criteria</h3>
-          <p>
-            Lenders assess several factors before approving your application. The most critical include your credit score, which indicates your creditworthiness and repayment history. A higher credit score often translates to better interest rates. Additionally, lenders evaluate your debt-to-income (DTI) ratio to ensure you have sufficient income to manage new debt alongside existing obligations. Your employment history and income stability are also significant considerations, as a steady job implies reliable repayments.
-          </p>
-          <h3 className="text-[#0B1B3D] text-lg font-bold mt-6 mb-3">Required Documents</h3>
-          <ul className="list-disc pl-5 space-y-2 mt-2">
-            <li><strong>Proof of Identity:</strong> Aadhaar Card, PAN Card, Passport, or Voter ID.</li>
-            <li><strong>Proof of Address:</strong> Utility bills, Rental Agreement, or Aadhaar Card.</li>
-            <li><strong>Income Proof:</strong> Recent salary slips (last 3-6 months), Form 16, and bank statements (last 6 months) for salaried individuals. For self-employed applicants, Income Tax Returns (ITR) for the last 2-3 years, Profit & Loss statements, and balance sheets are usually required.</li>
-            <li><strong>Property Documents (if applicable):</strong> Sale deed, allotment letter, builder-buyer agreement, or title deed.</li>
-          </ul>
-        </div>
+            {/* SEO / CONTENT SECTION */}
+      <section className="max-w-7xl mx-auto px-4">
+        {selectedCategory === 'home' ? (
+          <div className="space-y-8">
+            {/* Top Grid: Loan Types & Challenge Profiles */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Salaried & Self Employed Loans For */}
+              <div className="bg-white rounded-3xl border border-[#0B1B3D] overflow-hidden shadow-sm">
+                <div className="bg-[#0B1B3D] text-white p-4 text-center font-bold text-lg">
+                  WE DO SALARIED & SELF EMPLOYED LOANS FOR
+                </div>
+                <div className="p-6">
+                  <ul className="space-y-2.5 text-sm text-slate-700 font-medium list-disc pl-5">
+                    <li>Sheet House Purchase</li>
+                    <li>Site Purchase and Construction Loan</li>
+                    <li>Flat Purchase Loan</li>
+                    <li>Building Purchase Loan</li>
+                    <li>Construction Loan</li>
+                    <li>House Renovation Loan</li>
+                    <li>House Extension Loan</li>
+                    <li>BT Loan from any NBFC & Bank</li>
+                  </ul>
+                  <div className="mt-6 space-y-4">
+                    <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 text-sm font-semibold flex items-start gap-3 text-[#0B1B3D]">
+                      <Building2 className="w-5 h-5 shrink-0 text-amber-600" />
+                      VENDOR BT FROM ANY BANK, NBFC, CO OPERATIVE BANK
+                    </div>
+                    <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 text-sm font-semibold flex items-start gap-3 text-[#0B1B3D]">
+                      <FileCheck className="w-5 h-5 shrink-0 text-amber-600" />
+                      A, B, 9 & 11A, 9 & 11 A, 11B, CMC Khatha
+                    </div>
+                    <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 text-sm font-semibold flex items-start gap-3 text-[#0B1B3D]">
+                      <IndianRupee className="w-5 h-5 shrink-0 text-amber-600" />
+                      LOAN AMOUNT: 10L TO 15Cr
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Challenge Profiles */}
+              <div className="bg-white rounded-3xl border border-[#0B1B3D] overflow-hidden shadow-sm">
+                <div className="bg-[#0B1B3D] text-white p-4 text-center font-bold text-lg">
+                  CHALLENGES PROFILES WE FUND
+                </div>
+                <div className="p-6">
+                  <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+                    {[
+                      { icon: ShieldCheck, label: 'Police' },
+                      { icon: Building2, label: 'Builders' },
+                      { icon: Home, label: 'Real Estate' },
+                      { icon: CreditCard, label: 'Small Business Profile' },
+                      { icon: Hammer, label: 'Civil Contracts' },
+                      { icon: Sparkles, label: 'Bar & Restaurant' },
+                      { icon: FileCheck, label: 'RTO Agents' },
+                      { icon: Store, label: 'Panipuri Shop' },
+                      { icon: Briefcase, label: 'Commission Agents Agency' },
+                      { icon: Store, label: 'Beeda Stall' },
+                      { icon: Scale, label: 'Advocate' },
+                      { icon: Coffee, label: 'Tea Shops' },
+                    ].map((Profile, idx) => (
+                      <div key={idx} className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+                          <Profile.icon className="w-5 h-5" />
+                        </div>
+                        <span className="text-sm font-bold text-slate-700">{Profile.label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* USPs Section */}
+            <div className="bg-white rounded-3xl border border-slate-200 p-8 shadow-sm">
+              <h3 className="text-2xl font-black text-center text-[#0B1B3D] mb-8 uppercase tracking-wide">
+                Why BLR15: Our USP's
+              </h3>
+              
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* USP 1 */}
+                <div className="border border-amber-200 rounded-2xl overflow-hidden">
+                  <div className="bg-amber-500 text-[#0B1B3D] p-3 text-center font-bold text-sm">
+                    FOR SENP CUSTOMER
+                  </div>
+                  <div className="p-5">
+                    <ul className="space-y-3 text-xs text-slate-700 font-medium">
+                      <li className="flex gap-2"><span>1)</span> No ITR for loans up to 25 lakhs</li>
+                      <li className="flex gap-2"><span>2)</span> Home Loans up to 1.5 Cr for customer with only single year ITR</li>
+                      <li className="flex gap-2"><span>3)</span> Home Loan up to 25 years for SENP for Plot loans and Home loan</li>
+                      <li className="flex gap-2"><span>4)</span> Home loans for Advocates, Police personal, Jewellers, & Builders</li>
+                      <li className="flex gap-2"><span>5)</span> Home Loans up to 10 lakhs for people who do not have a permanent office set up. (Fruit vendors, auto driver, small flower shop)</li>
+                      <li className="flex gap-2"><span>6)</span> LTV as per RBI norms even in affordable segment.</li>
+                      <li className="flex gap-2"><span>7)</span> OCR not required if loan amount is registration value subject LTV support</li>
+                      <li className="flex gap-2"><span>8)</span> Pure cash rental income and 100% of the rental income will be considered.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* USP 2 */}
+                <div className="border border-[#0B1B3D]/30 rounded-2xl overflow-hidden">
+                  <div className="bg-[#0B1B3D] text-white p-3 text-center font-bold text-sm">
+                    FOR SALARIED CUSTOMER
+                  </div>
+                  <div className="p-5">
+                    <ul className="space-y-3 text-xs text-slate-700 font-medium">
+                      <li className="flex gap-2"><span>1)</span> Advantage Loans: Loans combining father and son income according to their retirement age and income will be considered up to 4 income earning members.</li>
+                      <li className="flex gap-2"><span>2)</span> Home Loan tenure up to 25 years (Age of retirement 65 years - IMGC)</li>
+                      <li className="flex gap-2"><span>3)</span> Loans for employees working in Proprietor / Partnership concern</li>
+                      <li className="flex gap-2"><span>4)</span> Loans up to 15 lakhs for cash salary customers</li>
+                      <li className="flex gap-2"><span>5)</span> Loans for salaried customer with consolidated pay</li>
+                      <li className="flex gap-2"><span>6)</span> Plot Loans for salaried customers up to 25 years</li>
+                      <li className="flex gap-2"><span>7)</span> Home loans for Salaried customers with consolidated pay (no deductions) - Salary certificate is sufficient.</li>
+                      <li className="flex gap-2"><span>8)</span> LTV as per RBI norms even in affordable segment.</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* USP 3 */}
+                <div className="border border-amber-500/50 rounded-2xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-amber-500 to-amber-400 text-[#0B1B3D] p-3 text-center font-bold text-sm">
+                    READY HOUSE PURCHASE
+                  </div>
+                  <div className="p-5">
+                    <ul className="space-y-3 text-xs text-slate-700 font-medium">
+                      <li className="flex gap-2"><span>1)</span> Passage property with a width of 3 ft</li>
+                      <li className="flex gap-2"><span>2)</span> Plot loan tenure up to 20 years</li>
+                      <li className="flex gap-2"><span>3)</span> Resale - Without Plan approval - 5 Yrs Property tax Required</li>
+                      <li className="flex gap-2"><span>4)</span> Resale Flat - Without Plan approval - 10 Yrs Property tax Required</li>
+                      <li className="flex gap-2"><span>5)</span> Properties with 10 Multi-tenant units</li>
+                      <li className="flex gap-2"><span>6)</span> Unapproved Plot purchase - Within Corporation & Municipal limits</li>
+                      <li className="flex gap-2"><span>7)</span> Properties with Non RCC roof considered as HL purchase and HL LTV.</li>
+                      <li className="flex gap-2"><span>8)</span> No subdivision approval is required for subdivided plots for approved layout.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom 2 USPs Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <div className="border border-[#0B1B3D]/30 rounded-2xl overflow-hidden">
+                  <div className="bg-[#0B1B3D] text-white p-3 text-center font-bold text-sm">
+                    LEGAL USP
+                  </div>
+                  <div className="p-5">
+                    <ul className="space-y-3 text-xs text-slate-700 font-medium">
+                      <li className="flex gap-2"><span>1)</span> Property title tracing only for 13 years</li>
+                      <li className="flex gap-2"><span>2)</span> Loans up to 25 lakhs - Title tracing can be done from revenue documents and title docs can be even 6-month-old.</li>
+                      <li className="flex gap-2"><span>3)</span> Katha is required only in the name of previous owner</li>
+                      <li className="flex gap-2"><span>4)</span> Grama Thana properties can be funded for Ready House Purchase and Self-construction loan</li>
+                      <li className="flex gap-2"><span>5)</span> Self Construction Cases without Plan Approval</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="border border-amber-500/50 rounded-2xl overflow-hidden">
+                  <div className="bg-gradient-to-r from-amber-500 to-amber-400 text-[#0B1B3D] p-3 text-center font-bold text-sm">
+                    MARKET VALUE FUNDING
+                  </div>
+                  <div className="p-5 flex flex-col justify-center h-full">
+                    <ul className="space-y-4 text-sm text-slate-800 font-bold">
+                      <li className="flex gap-2"><span>1)</span> Loan up to 100% of registered value subject to LTV on Market Value</li>
+                      <li className="flex gap-2"><span>2)</span> Property can be registered only for Guideline value - LTV on Market Value</li>
+                      <li className="flex gap-2"><span>3)</span> Without OCR proof if loan amount equal to registration value.</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Serving Regions */}
+            <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 flex items-center justify-center gap-4 flex-wrap text-center">
+              <span className="font-bold text-[#0B1B3D]">SERVING:</span>
+              <span className="text-slate-600 text-sm font-medium">Bangalore, Bangalore Rural, Chikkaballapura, Ramanagara, Kolar, Mandya, Mysore, Tumkur, and other Districts also.</span>
+            </div>
+          </div>
+        ) : (
+          <div className="bg-white rounded-3xl p-8 border border-slate-200 prose prose-sm prose-slate max-w-none">
+            <h2 className="text-[#0B1B3D] text-xl font-bold mb-4">A Comprehensive Guide to Loans in India</h2>
+            <p>
+              When considering financing a large expense, whether it's buying a new home, renovating an existing property, or consolidating debt, understanding your loan options is crucial. A loan is a financial tool that allows you to borrow a specific amount of money from a lender, which you agree to pay back with interest over a set period. 
+            </p>
+            <h3 className="text-[#0B1B3D] text-lg font-bold mt-6 mb-3">Eligibility Criteria</h3>
+            <p>
+              Lenders assess several factors before approving your application. The most critical include your credit score, which indicates your creditworthiness and repayment history. A higher credit score often translates to better interest rates. Additionally, lenders evaluate your debt-to-income (DTI) ratio to ensure you have sufficient income to manage new debt alongside existing obligations. Your employment history and income stability are also significant considerations, as a steady job implies reliable repayments.
+            </p>
+            <h3 className="text-[#0B1B3D] text-lg font-bold mt-6 mb-3">Required Documents</h3>
+            <ul className="list-disc pl-5 space-y-2 mt-2">
+              <li><strong>Proof of Identity:</strong> Aadhaar Card, PAN Card, Passport, or Voter ID.</li>
+              <li><strong>Proof of Address:</strong> Utility bills, Rental Agreement, or Aadhaar Card.</li>
+              <li><strong>Income Proof:</strong> Recent salary slips (last 3-6 months), Form 16, and bank statements (last 6 months) for salaried individuals. For self-employed applicants, Income Tax Returns (ITR) for the last 2-3 years, Profit & Loss statements, and balance sheets are usually required.</li>
+              <li><strong>Property Documents (if applicable):</strong> Sale deed, allotment letter, builder-buyer agreement, or title deed.</li>
+            </ul>
+          </div>
+        )}
       </section>
 
     </div>
