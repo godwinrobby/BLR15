@@ -538,83 +538,77 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {loanTypes.map((loan, i) => {
-              const Icon = loan.icon;
-              return (
-                <div
-                  key={i}
-                  className="bg-white rounded-2xl p-6 border border-slate-200/80 hover:border-amber-400 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-12 h-12 rounded-xl bg-[#0B1B3D]/5 group-hover:bg-amber-500/10 text-[#0B1B3D] group-hover:text-amber-600 flex items-center justify-center transition-colors">
-                        <Icon className="w-6 h-6 stroke-[2]" />
-                      </div>
-                      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 group-hover:bg-amber-100 group-hover:text-amber-800 transition-colors">
-                        Home Loan
-                      </span>
-                    </div>
-
-                    <h3 className="text-lg font-extrabold text-[#0B1B3D] font-['Outfit'] mb-2 leading-snug">
-                      {loan.title}
-                    </h3>
-                    <p className="text-xs text-slate-500 leading-relaxed mb-4">
-                      {loan.desc}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100">
+          {/* Bullet list of loan types */}
+          <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sm:p-8 lg:p-10">
+            <ul className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-5">
+              {loanTypes.map((loan, i) => {
+                const Icon = loan.icon;
+                return (
+                  <li key={i}>
                     <button
                       onClick={() => onNavigate('eligibility', { loanType: loan.type })}
-                      className="w-full py-2.5 rounded-xl text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      className="w-full text-left flex items-start gap-3.5 p-2.5 -m-2.5 rounded-xl hover:bg-amber-50/70 transition-colors group cursor-pointer"
                     >
-                      <FileCheck className="w-3.5 h-3.5 stroke-[2.5]" />
-                      Check Eligibility
+                      <span className="mt-0.5 w-9 h-9 rounded-full bg-amber-500/10 text-amber-600 group-hover:bg-amber-500 group-hover:text-slate-950 flex items-center justify-center shrink-0 transition-colors">
+                        <Icon className="w-[18px] h-[18px] stroke-[2.2]" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-extrabold text-[#0B1B3D] font-['Outfit'] leading-snug">
+                          {loan.title}
+                        </span>
+                        <span className="block text-xs text-slate-500 leading-relaxed mt-1">
+                          {loan.desc}
+                        </span>
+                      </span>
                     </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+                  </li>
+                );
+              })}
+            </ul>
 
-          {/* Flyer Highlights */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-            {[
-              {
-                icon: Building2,
-                title: 'Vendor BT Accepted',
-                desc: 'Balance transfer from any Bank, NBFC or Co-Operative Bank with top-up at the same rate.',
-              },
-              {
-                icon: FileCheck,
-                title: 'Multiple Khatha Types',
-                desc: 'A, B, 9 & 11A, 9 & 11 A, 11B and CMC Khatha properties are considered for funding.',
-              },
-              {
-                icon: Percent,
-                title: 'Loan Amount 10L to 15Cr',
-                desc: 'Funding band from ₹10 Lakhs up to ₹15 Crores for eligible salaried & self-employed profiles.',
-              },
-            ].map((info, idx) => {
-              const Icon = info.icon;
-              return (
-                <div
-                  key={idx}
-                  className="bg-white rounded-2xl p-6 border border-slate-200/80 hover:border-amber-400 hover:shadow-xl transition-all duration-300"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center mb-5 shadow-md shadow-amber-500/20">
-                    <Icon className="w-7 h-7 stroke-[2.2]" />
-                  </div>
-                  <h3 className="text-base font-extrabold text-[#0B1B3D] font-['Outfit'] mb-2">
-                    {info.title}
-                  </h3>
-                  <p className="text-xs text-slate-500 leading-relaxed">
-                    {info.desc}
-                  </p>
-                </div>
-              );
-            })}
+            {/* Flyer bullet highlights */}
+            <ul className="mt-8 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4">
+              {[
+                {
+                  title: 'Vendor BT Accepted',
+                  desc: 'Balance transfer from any Bank, NBFC or Co-Operative Bank with top-up at the same rate.',
+                },
+                {
+                  title: 'Multiple Khatha Types',
+                  desc: 'A, B, 9 & 11A, 9 & 11 A, 11B and CMC Khatha properties are considered for funding.',
+                },
+                {
+                  title: 'Loan Amount 10L to 15Cr',
+                  desc: 'Funding band from ₹10 Lakhs up to ₹15 Crores for eligible salaried & self-employed profiles.',
+                },
+              ].map((info, idx) => (
+                <li key={idx} className="flex items-start gap-2.5">
+                  <CheckCircle2 className="w-4 h-4 text-amber-500 shrink-0 mt-0.5 stroke-[2.5]" />
+                  <span>
+                    <span className="block text-sm font-extrabold text-[#0B1B3D] font-['Outfit']">
+                      {info.title}
+                    </span>
+                    <span className="block text-xs text-slate-500 leading-relaxed mt-1">
+                      {info.desc}
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+
+            {/* Card footer CTA */}
+            <div className="mt-8 pt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <p className="text-xs text-slate-500 text-center sm:text-left">
+                Salaried, self-employed and non-standard income profiles are all welcome.
+              </p>
+              <button
+                onClick={() => onNavigate('eligibility', { loanType: 'Home Purchase Loan' })}
+                className="px-6 py-3 rounded-xl font-extrabold text-sm bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md shadow-amber-500/20 transition-colors inline-flex items-center gap-2 shrink-0 cursor-pointer"
+              >
+                <FileCheck className="w-4 h-4 stroke-[2.5]" />
+                <span>Check Eligibility</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -636,23 +630,23 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            {challengeProfiles.map((profile, idx) => {
-              const Icon = profile.icon;
-              return (
-                <div
-                  key={idx}
-                  className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white border border-slate-200 hover:border-amber-400 hover:shadow-lg transition-all duration-300 text-center"
-                >
-                  <div className="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center shadow-md shadow-amber-500/20">
-                    <Icon className="w-6 h-6 stroke-[2.2]" />
-                  </div>
-                  <span className="text-xs font-bold text-[#0B1B3D] leading-snug">
-                    {profile.label}
-                  </span>
-                </div>
-              );
-            })}
+          {/* Bullet list of challenge profiles */}
+          <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-6 sm:p-8 lg:p-10">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-4">
+              {challengeProfiles.map((profile, idx) => {
+                const Icon = profile.icon;
+                return (
+                  <li key={idx} className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-full bg-amber-500/15 text-amber-600 flex items-center justify-center shrink-0">
+                      <Icon className="w-4 h-4 stroke-[2.2]" />
+                    </span>
+                    <span className="text-sm font-semibold text-slate-700 leading-snug">
+                      {profile.label}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
 
           <div className="mt-12 text-center">
