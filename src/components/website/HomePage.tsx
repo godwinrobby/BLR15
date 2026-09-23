@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { calculateHomeLoanEmi, formatINR } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
+import { TestimonialSection } from '../common/TestimonialSection';
 
 interface HomePageProps {
   onNavigate: (tab: string, state?: any) => void;
@@ -622,6 +623,8 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry })
           </div>
         </div>
       </section>
+
+      <TestimonialSection category="all" />
 
       {/* Office & Direct Contact Section */}
       <section className="py-16 px-4 sm:px-6 bg-slate-100">
