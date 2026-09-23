@@ -12,7 +12,7 @@ import { ContactPage } from './components/website/ContactPage';
 import { MobileAppView } from './components/mobile/MobileAppView';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { HomeLoanEnquiry } from './types';
-import { updateDocumentSEO } from './utils/seo';
+import { updateDocumentSEO, getEligibilityPageTitle } from './utils/seo';
 import { initSupabaseSync } from './services/storageService';
 
 // Route parser helper
@@ -157,16 +157,22 @@ export function App() {
     };
   }, []);
 
-  // Update dynamic SEO tags whenever activeTab or viewMode changes
+  // Update dynamic SEO tags whenever activeTab, viewMode or the routed loan type changes
   useEffect(() => {
     if (viewMode === 'website') {
-      updateDocumentSEO(activeTab);
+      // The eligibility page title follows the ?type= query param
+      // e.g. #/eligibility?amount=500000&type=Personal+Loan
+      const customTitle =
+        activeTab === 'eligibility'
+          ? `${getEligibilityPageTitle(navState.loanType)} (Instant) | BLR15 Home Loans Bangalore`
+          : undefined;
+      updateDocumentSEO(activeTab, customTitle);
     } else if (viewMode === 'admin') {
       document.title = 'CRM Lead Management Portal | BLR15 Home Loans Admin';
     } else if (viewMode === 'mobile-app') {
       document.title = 'BLR15 Home Loans Mobile App Simulation | Bangalore 560015';
     }
-  }, [activeTab, viewMode]);
+  }, [activeTab, viewMode, navState.loanType]);
 
   // Scroll to top on navigation change
   useEffect(() => {

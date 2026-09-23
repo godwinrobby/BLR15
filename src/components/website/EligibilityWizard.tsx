@@ -29,6 +29,7 @@ import {
   formatINR,
 } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
+import { getLoanTypeLabel, getEligibilityPageTitle } from '../../utils/seo';
 
 interface EligibilityWizardProps {
   initialLoanType?: string;
@@ -218,6 +219,17 @@ export const EligibilityWizard: React.FC<EligibilityWizardProps> = ({
     { num: 4, title: 'Existing Loan', icon: CreditCard },
   ];
 
+  // Page heading mirrors the loan type passed via URL / navigation state
+  // e.g. #/eligibility?amount=500000&type=Personal+Loan
+  const loanTypeLabel = getLoanTypeLabel(initialLoanType);
+  const eligibilityTitle = getEligibilityPageTitle(initialLoanType);
+  const eligibilitySubtitle =
+    loanTypeLabel === 'Personal Loan'
+      ? 'Answer a few quick questions to estimate how much personal loan you can borrow with indicative monthly EMIs.'
+      : loanTypeLabel === 'Car Loan'
+      ? 'Answer a few quick questions to estimate how much car loan you can borrow with indicative monthly EMIs.'
+      : 'Answer a few quick questions to estimate how much home loan you can borrow with indicative monthly EMIs.';
+
   return (
     <div className="min-h-screen bg-slate-50 py-12 px-4 sm:px-6">
       <div className="max-w-3xl mx-auto">
@@ -226,13 +238,13 @@ export const EligibilityWizard: React.FC<EligibilityWizardProps> = ({
         <div className="text-center mb-8 space-y-2">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-100 text-amber-900 text-xs font-bold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-            Fast & Indicative Check
+            Fast &amp; Indicative Check{loanTypeLabel ? ` • ${loanTypeLabel}` : ''}
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-[#0B1B3D] font-['Outfit']">
-            Check Your Home Loan Eligibility
+            {eligibilityTitle}
           </h1>
           <p className="text-slate-600 text-sm max-w-lg mx-auto">
-            Answer a few quick questions to estimate how much loan you can borrow with indicative monthly EMIs.
+            {eligibilitySubtitle}
           </p>
         </div>
 

@@ -198,6 +198,38 @@ export const ROUTE_SEO: Record<string, PageSEO> = {
 };
 
 /**
+ * Maps a loan-type value coming from the URL query string or navigation state
+ * (e.g. #/eligibility?amount=500000&type=Personal+Loan) to a clean display label.
+ * Returns null when the value is empty or not recognised.
+ */
+export function getLoanTypeLabel(loanType?: string): string | null {
+  if (!loanType) return null;
+  const t = loanType.trim().toLowerCase();
+  if (!t) return null;
+
+  if (t.includes('personal')) return 'Personal Loan';
+  if (t.includes('car')) return 'Car Loan';
+  if (t.includes('balance transfer') || t.includes('bt ')) return 'Home Loan Balance Transfer';
+  if (t.includes('top-up') || t.includes('top up') || t.includes('topup')) return 'Home Loan Top-Up';
+  if (t.includes('construction')) return 'Home Construction Loan';
+  if (t.includes('sheet')) return 'Sheet House Purchase Loan';
+  if (t.includes('flat') || t.includes('building') || t.includes('purchase')) return 'Home Purchase Loan';
+  if (t.includes('nri')) return 'NRI Home Loan';
+  if (t.includes('home')) return 'Home Loan';
+  return null;
+}
+
+/**
+ * Page heading shown on the eligibility wizard for a given loan type.
+ * Falls back to the generic home loan eligibility title.
+ */
+export function getEligibilityPageTitle(loanType?: string): string {
+  const label = getLoanTypeLabel(loanType);
+  if (!label || label === 'Home Loan') return 'Check Your Home Loan Eligibility';
+  return `Check Your ${label} Eligibility`;
+}
+
+/**
  * Updates page title, meta description, open graph tags, canonical tag, and structured JSON-LD
  */
 export function updateDocumentSEO(routeKey: string, customTitle?: string) {
