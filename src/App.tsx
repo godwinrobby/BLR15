@@ -225,10 +225,15 @@ export function App() {
           />
         )}
 
-        {activeTab === 'loans' && (
+        {(activeTab === 'loans' || activeTab === 'personal-loan' || activeTab === 'car-loan') && (
           <HomeLoansPage
             onNavigate={handleNavigate}
             onOpenEnquiry={handleOpenEnquiry}
+            initialCategory={
+              activeTab === 'personal-loan' ? 'personal' :
+              activeTab === 'car-loan' ? 'car' :
+              'home'
+            }
           />
         )}
 

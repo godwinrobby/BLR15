@@ -18,6 +18,8 @@ import {
   MapPin,
   Clock,
   ArrowUpRight,
+  Wallet,
+  Car,
 } from 'lucide-react';
 import { calculateHomeLoanEmi, formatINR } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
@@ -28,6 +30,7 @@ interface HomePageProps {
 }
 
 export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry }) => {
+  const [selectedHomeTab, setSelectedHomeTab] = useState<'home' | 'personal' | 'car'>('home');
   // Quick mini calculator in hero
   const [quickAmount, setQuickAmount] = useState<number>(5000000); // 50 Lakhs
   const [quickTenure, setQuickTenure] = useState<number>(20);
@@ -38,6 +41,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry })
   const loanServices = [
     {
       id: 'purchase',
+      category: 'home',
       title: 'Home Purchase Loan',
       type: 'Home Purchase Loan',
       icon: Home,
@@ -49,6 +53,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry })
     },
     {
       id: 'construction',
+      category: 'home',
       title: 'Home Construction Loan',
       type: 'Home Construction Loan',
       icon: Hammer,
@@ -60,6 +65,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry })
     },
     {
       id: 'transfer',
+      category: 'home',
       title: 'Balance Transfer',
       type: 'Home Loan Balance Transfer',
       icon: ArrowRightLeft,
@@ -71,6 +77,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry })
     },
     {
       id: 'topup',
+      category: 'home',
       title: 'Home Loan Top-Up',
       type: 'Home Loan Top-Up',
       icon: BadgePlus,
@@ -79,6 +86,30 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry })
       rate: '8.65%*',
       tenure: 'Same as home loan',
       features: ['Minimal documentation for existing borrowers', 'Lowest rates compared to personal loans', 'Immediate disbursal upon approval'],
+    },
+    {
+      id: 'personal',
+      category: 'personal',
+      title: 'Personal Loan',
+      type: 'Personal Loan',
+      icon: Wallet,
+      tag: 'Instant & Unsecured',
+      desc: 'Zero collateral required for any personal or emergency need.',
+      rate: '10.49%*',
+      tenure: 'Up to 5 Years',
+      features: ['100% paperless processing', 'No collateral required', 'Flexible repayment tenure'],
+    },
+    {
+      id: 'car',
+      category: 'car',
+      title: 'Car Loan',
+      type: 'Car Loan',
+      icon: Car,
+      tag: 'New, Used & EV',
+      desc: 'Drive home your dream car or electric vehicle today.',
+      rate: '8.75%*',
+      tenure: 'Up to 7 - 8 Years',
+      features: ['Up to 100% on-road funding', 'Special rates for EVs', 'Pre-approved dealer tie-ups'],
     },
   ];
 
@@ -377,15 +408,38 @@ export const HomePage: React.FC<HomePageProps> = ({ onNavigate, onOpenEnquiry })
               Our Loan Offerings
             </span>
             <h2 className="text-3xl sm:text-4xl font-black font-['Outfit'] text-[#0B1B3D]">
-              Home Loans Made Simple
+              Loans Made Simple
             </h2>
             <p className="text-slate-600 text-base">
-              Find a home loan solution suited to your financial requirements with transparent terms and dedicated guidance.
+              Find a loan solution suited to your financial requirements with transparent terms and dedicated guidance.
             </p>
           </div>
 
+          {/* Category Filter Tabs */}
+          <div className="flex items-center justify-center gap-2 flex-wrap mb-10">
+            {[
+              { id: 'home', label: 'Home Loan' },
+              { id: 'personal', label: 'Personal Loan' },
+              { id: 'car', label: 'Car loans' },
+            ].map(tab => (
+              <button
+                key={tab.id}
+                onClick={() => setSelectedHomeTab(tab.id as 'home' | 'personal' | 'car')}
+                className={`px-6 py-2.5 rounded-full text-sm font-bold transition-all cursor-pointer ${
+                  selectedHomeTab === tab.id
+                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20 scale-105'
+                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {loanServices.map(service => {
+            {loanServices
+              .filter(service => service.category === selectedHomeTab)
+              .map(service => {
               const Icon = service.icon;
               return (
                 <div

@@ -257,8 +257,8 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
                   <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
                     <Building className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-bold text-slate-900 font-['Outfit']">Home Loans</span>
-                  <span className="text-[10px] text-slate-500">4 Tailored Loan Types</span>
+                  <span className="text-xs font-bold text-slate-900 font-['Outfit']">Loans</span>
+                  <span className="text-[10px] text-slate-500">Multiple Loan Types</span>
                 </button>
 
                 <button
