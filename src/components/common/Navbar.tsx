@@ -18,7 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
-import { getStoredEnquiries } from '../../services/storageService';
+import { getStoredEnquiries, refreshEnquiries } from '../../services/storageService';
 
 interface NavbarProps {
   currentTab: string;
@@ -42,6 +42,7 @@ export const Navbar: React.FC<NavbarProps> = ({
       setEnquiryCount(items.length);
     };
     updateCount();
+    refreshEnquiries(); // live enquiry count from /api (updates via event)
     window.addEventListener('blr15-enquiries-updated', updateCount);
     return () => window.removeEventListener('blr15-enquiries-updated', updateCount);
   }, []);

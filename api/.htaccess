@@ -8,6 +8,9 @@ RewriteEngine On
 # Deny access to the vendored dependencies
 RewriteRule ^vendor/ - [F]
 
+# Deny direct access to the live data store (customer PII / staff records)
+RewriteRule ^storage/ - [F]
+
 # Route extensionless API calls (/api/<route>) to the front controller
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d

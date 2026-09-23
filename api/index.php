@@ -10,9 +10,12 @@ declare(strict_types=1);
  *   POST /api/send-enquiry-email → customer confirmation + admin lead alert (PHPMailer)
  *   POST /api/save-smtp-config   → persist SMTP settings to ../.smtp-config.json
  *   POST /api/test-smtp          → verify SMTP credentials & send a test email
+ *   GET/POST/PUT/DELETE /api/enquiries[/{id}] → live CRM enquiry store (JSON file)
+ *   GET/PUT /api/staff           → live staff roster store (JSON file)
  */
 
 require __DIR__ . '/bootstrap.php';
+require __DIR__ . '/store.php';
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'OPTIONS') {
     http_response_code(204);
@@ -229,9 +232,143 @@ function handle_test_smtp(): never
 }
 
 // ---------------------------------------------------------------
+// 6) /api/enquiries — live CRM store backing the /admin portal
+// ---------------------------------------------------------------
+function method_not_allowed(array $allow): never
+{
+    header('Allow: ' . implode(', ', $allow));
+    json_out([
+        'success' => false,
+        'error' => 'Method not allowed. Allowed: ' . implode(', ', $allow),
+    ], 405);
+}
+
+function find_enquiry_index(array $list, string $id): ?int
+{
+    foreach ($list as $index => $item) {
+        if ((string) ($item['id'] ?? '') === $id) {
+            return $index;
+        }
+    }
+    return null;
+}
+
+function handle_enquiries(string $method, ?string $pathId): never
+{
+    $list = read_collection('enquiries');
+
+    switch ($method) {
+        case 'GET':
+            if ($pathId !== null) {
+                $index = find_enquiry_index($list, $pathId);
+                if ($index === null) {
+                    json_out(['success' => false, 'error' => "Enquiry not found: {$pathId}"], 404);
+                }
+                json_out(['success' => true, 'data' => $list[$index]]);
+            }
+            json_out(['success' => true, 'count' => count($list), 'data' => $list]);
+
+        case 'POST':
+            if ($pathId !== null) {
+                method_not_allowed(['GET', 'PUT', 'DELETE']);
+            }
+            $payload = read_json_body();
+            if (trim((string) ($payload['customerName'] ?? '')) === '') {
+                json_out(['success' => false, 'error' => 'Customer name is required'], 400);
+            }
+            if (trim((string) ($payload['mobile'] ?? '')) === '') {
+                json_out(['success' => false, 'error' => 'Mobile number is required'], 400);
+            }
+            $record = build_new_enquiry($payload, $list);
+            array_unshift($list, $record);
+            write_collection('enquiries', $list);
+            json_out(['success' => true, 'data' => $record], 201);
+
+        case 'PUT':
+            $payload = read_json_body();
+            $id = $pathId ?? trim((string) ($payload['id'] ?? ''));
+            if ($id === '') {
+                json_out(['success' => false, 'error' => 'Enquiry id is required'], 400);
+            }
+            $index = find_enquiry_index($list, $id);
+            if ($index === null) {
+                json_out(['success' => false, 'error' => "Enquiry not found: {$id}"], 404);
+            }
+            $record = build_updated_enquiry($payload, $list[$index]);
+            $list[$index] = $record;
+            write_collection('enquiries', $list);
+            json_out(['success' => true, 'data' => $record]);
+
+        case 'DELETE':
+            $id = $pathId ?? trim((string) ($_GET['id'] ?? ''));
+            if ($id === '') {
+                json_out(['success' => false, 'error' => 'Enquiry id is required'], 400);
+            }
+            $index = find_enquiry_index($list, $id);
+            if ($index === null) {
+                json_out(['success' => false, 'error' => "Enquiry not found: {$id}"], 404);
+            }
+            unset($list[$index]);
+            write_collection('enquiries', array_values($list));
+            json_out(['success' => true, 'deleted' => $id]);
+
+        default:
+            method_not_allowed(['GET', 'POST', 'PUT', 'DELETE']);
+    }
+}
+
+// ---------------------------------------------------------------
+// 7) /api/staff — live staff roster store (full-list replace)
+// ---------------------------------------------------------------
+function handle_staff(string $method): never
+{
+    $list = read_collection('staff');
+
+    switch ($method) {
+        case 'GET':
+            json_out(['success' => true, 'count' => count($list), 'data' => $list]);
+
+        case 'PUT':
+        case 'POST':
+            $payload = read_json_body();
+            $items = (isset($payload[0]) || $payload === []) ? $payload : ($payload['staff'] ?? $payload['data'] ?? null);
+            if (!is_array($items)) {
+                json_out(['success' => false, 'error' => 'Staff array payload is required'], 400);
+            }
+            $sanitized = [];
+            foreach ($items as $member) {
+                if (is_array($member)) {
+                    $sanitized[] = sanitize_staff($member);
+                }
+            }
+            write_collection('staff', $sanitized);
+            json_out(['success' => true, 'count' => count($sanitized), 'data' => $sanitized]);
+
+        default:
+            method_not_allowed(['GET', 'PUT', 'POST']);
+    }
+}
+
+// ---------------------------------------------------------------
 // Dispatch
 // ---------------------------------------------------------------
 $route = resolve_route();
+
+// Resource routes with an optional /{id} suffix and multiple HTTP methods.
+$routeParts = explode('/', $route, 2);
+$routeBase = $routeParts[0];
+$routeSub = isset($routeParts[1]) ? rawurldecode($routeParts[1]) : null;
+$method = strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET');
+
+if ($routeBase === 'enquiries') {
+    handle_enquiries($method, $routeSub);
+}
+if ($routeBase === 'staff') {
+    if ($routeSub !== null) {
+        json_out(['success' => false, 'error' => "Unknown API route: {$route}"], 404);
+    }
+    handle_staff($method);
+}
 
 switch ($route) {
     case '':

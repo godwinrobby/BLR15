@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
   CheckCircle2,
@@ -12,7 +12,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { HomeLoanEnquiry, EnquiryStatus } from '../../types';
-import { getStoredEnquiries, formatINR } from '../../services/storageService';
+import { getStoredEnquiries, refreshEnquiries, formatINR } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
 
 interface TrackEnquiryPageProps {
@@ -27,7 +27,14 @@ export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }
   });
   const [hasSearched, setHasSearched] = useState(true);
 
-  const handleSearch = (e: React.FormEvent) => {
+  // Keep the demo record in sync with the live /api store on mount.
+  useEffect(() => {
+    refreshEnquiries().then(list => {
+      setSearchedEnquiry(list.find(e => e.id === 'BLR15-0012') || null);
+    });
+  }, []);
+
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     setHasSearched(true);
 
@@ -37,7 +44,7 @@ export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }
       return;
     }
 
-    const list = getStoredEnquiries();
+    const list = await refreshEnquiries();
     const cleanDigits = term.replace(/\D/g, '');
 
     const found = list.find(item => {

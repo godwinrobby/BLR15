@@ -13,6 +13,30 @@ endpoints in `server.ts`. Same request/response contract, so the React app
 | POST   | `/api/send-enquiry-email` | Customer confirmation + admin lead alert (PHPMailer) |
 | POST   | `/api/save-smtp-config` | Persist SMTP settings                                |
 | POST   | `/api/test-smtp`        | Verify SMTP credentials and send a test email        |
+| GET    | `/api/enquiries`        | List all enquiries (live CRM data)                   |
+| GET    | `/api/enquiries/{id}`   | Fetch a single enquiry                               |
+| POST   | `/api/enquiries`        | Create an enquiry (server assigns `BLR15-XXXX` id)   |
+| PUT    | `/api/enquiries/{id}`   | Update an enquiry (status, remarks, follow-ups, …)   |
+| DELETE | `/api/enquiries/{id}`   | Delete an enquiry                                    |
+| GET    | `/api/staff`            | List the staff roster                                |
+| PUT    | `/api/staff`            | Replace the staff roster (full-array payload)        |
+
+All responses are JSON: success → `{ "success": true, "data": ... }`
+(lists also include `count`), errors → `{ "success": false, "error": ... }`
+with the proper HTTP status (400 / 404 / 405 / 500).
+
+## Data store
+
+Enquiries and staff are persisted as JSON files in `api/storage/`
+(atomic write with lock). The runtime files `enquiries.json` / `staff.json`
+are **git-ignored** (customer PII) and auto-seeded from the committed
+`seed-*.json` files (same records as the frontend's `INITIAL_ENQUIRIES` /
+`INITIAL_STAFF`) on first access. `.htaccess` / `router.php` block direct web
+access to `storage/`.
+
+The React app (`src/services/storageService.ts`) is API-first: it reads and
+writes through these endpoints and falls back to `localStorage` when the API
+is unreachable, so the site keeps working offline.
 
 ## Configuration
 

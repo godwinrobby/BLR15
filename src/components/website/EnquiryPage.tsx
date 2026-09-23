@@ -104,7 +104,7 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage(null);
 
@@ -127,7 +127,7 @@ export const EnquiryPage: React.FC<EnquiryPageProps> = ({
 
     setIsSubmitting(true);
     try {
-      const newEnquiry = createEnquiry({
+      const newEnquiry = await createEnquiry({
         customerName: formData.name,
         mobile: formData.mobile,
         email: formData.email,

@@ -9,3 +9,7 @@ coverage/
 
 # Runtime SMTP config (contains password) shared by server.ts and /api
 .smtp-config.json
+
+# Runtime CRM data store (customer PII) — seed-*.json files stay committed
+api/storage/enquiries.json
+api/storage/staff.json

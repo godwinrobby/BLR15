@@ -24,10 +24,11 @@ export const ContactPage: React.FC = () => {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.phone) return;
 
+    // Live submission to /api/enquiries; errors are logged, confirmation still shows.
     createEnquiry({
       customerName: formData.name,
       mobile: formData.phone,
@@ -42,7 +43,7 @@ export const ContactPage: React.FC = () => {
       message: `Contact Form Message: ${formData.message}`,
       source: 'Website Form',
       status: 'New',
-    });
+    }).catch(err => console.error('Enquiry submission failed:', err));
 
     setSubmitted(true);
   };

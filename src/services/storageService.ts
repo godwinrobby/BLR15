@@ -12,6 +12,8 @@ import {
   mapSupabaseToEnquiry,
 } from './supabaseClient';
 import { sendEnquiryEmailViaSmtp } from './emailService';
+import { apiJson, ApiError } from './apiClient';
+import type { ApiListResponse, ApiItemResponse } from './apiClient';
 
 const ENQUIRIES_STORAGE_KEY = 'blr15_enquiries_v1';
 const STAFF_STORAGE_KEY = 'blr15_staff_v1';
@@ -49,6 +51,81 @@ export const saveEnquiries = (enquiries: HomeLoanEnquiry[], syncToCloud: boolean
   }
 };
 
+/** Loads the live enquiry list from /api/enquiries into the local cache. */
+export const refreshEnquiries = async (): Promise<HomeLoanEnquiry[]> => {
+  try {
+    const body = await apiJson<ApiListResponse<HomeLoanEnquiry>>('enquiries');
+    if (Array.isArray(body.data)) {
+      saveEnquiries(body.data);
+      return body.data;
+    }
+    return getStoredEnquiries();
+  } catch (e) {
+    console.warn('Live enquiries API unavailable, using local cache:', e);
+    return getStoredEnquiries();
+  }
+};
+
+/** Loads the live staff roster from /api/staff into the local cache. */
+export const refreshStaff = async (): Promise<AdminUser[]> => {
+  try {
+    const body = await apiJson<ApiListResponse<AdminUser>>('staff');
+    if (Array.isArray(body.data)) {
+      localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(body.data));
+      return body.data;
+    }
+    return getStoredStaff();
+  } catch (e) {
+    console.warn('Live staff API unavailable, using local cache:', e);
+    return getStoredStaff();
+  }
+};
+
+/** Places a record at the top of the local cache and notifies listeners. */
+const cacheEnquiry = (record: HomeLoanEnquiry): void => {
+  const list = getStoredEnquiries().filter(item => item.id !== record.id);
+  saveEnquiries([record, ...list]);
+};
+
+/** Fire-and-forget SMTP dispatch (parity with the original create flow). */
+const dispatchEnquiryEmails = (enquiry: HomeLoanEnquiry): void => {
+  sendEnquiryEmailViaSmtp(enquiry).catch(err => {
+    console.warn('Asynchronous SMTP email dispatch deferred:', err);
+  });
+};
+
+/**
+ * Pushes a locally computed record to /api/enquiries so every admin session
+ * sees the change. Falls back to the local cache when the API is unreachable.
+ */
+const persistEnquiry = async (record: HomeLoanEnquiry): Promise<HomeLoanEnquiry> => {
+  try {
+    const body = await apiJson<ApiItemResponse<HomeLoanEnquiry>>(
+      `enquiries/${encodeURIComponent(record.id)}`,
+      { method: 'PUT', body: JSON.stringify(record) }
+    );
+    if (body?.data?.id) {
+      // Reconcile the cache with the server's canonical copy.
+      saveEnquiries(getStoredEnquiries().map(item => (item.id === body.data.id ? body.data : item)));
+      return body.data;
+    }
+    return record;
+  } catch (e) {
+    console.warn('Enquiry API sync failed (change kept in local cache):', e);
+    return record;
+  }
+};
+
+/** True when createEnquiry should continue with the offline/local path. */
+const shouldFallbackLocally = (err: unknown): boolean => {
+  if (err instanceof ApiError) {
+    // 404 = older /api deployment without the data routes; 5xx = server fault.
+    // Validation errors (other 4xx) are re-thrown to the caller.
+    return err.status === 404 || err.status >= 500;
+  }
+  return true; // network failure / offline
+};
+
 export const generateNextEnquiryId = (): string => {
   const list = getStoredEnquiries();
   const highestNumber = list.reduce((max, item) => {
@@ -63,10 +140,28 @@ export const generateNextEnquiryId = (): string => {
   return `BLR15-${String(nextNum).padStart(4, '0')}`;
 };
 
-export const createEnquiry = (enquiryData: Omit<HomeLoanEnquiry, 'id' | 'createdAt' | 'updatedAt' | 'statusHistory' | 'followUps'>): HomeLoanEnquiry => {
+export const createEnquiry = async (
+  enquiryData: Omit<HomeLoanEnquiry, 'id' | 'createdAt' | 'updatedAt' | 'statusHistory' | 'followUps'>
+): Promise<HomeLoanEnquiry> => {
+  // Live path: persist through the PHP API (server assigns id/timestamps/history).
+  try {
+    const body = await apiJson<ApiItemResponse<HomeLoanEnquiry>>('enquiries', {
+      method: 'POST',
+      body: JSON.stringify(enquiryData),
+    });
+    const created = body.data;
+    cacheEnquiry(created);
+    dispatchEnquiryEmails(created);
+    return created;
+  } catch (err) {
+    if (!shouldFallbackLocally(err)) throw err;
+    console.warn('Live API unavailable, creating enquiry locally:', err);
+  }
+
+  // Offline fallback — previous localStorage-only behaviour.
   const newId = generateNextEnquiryId();
   const now = new Date().toISOString();
-  
+
   const newEnquiry: HomeLoanEnquiry = {
     ...enquiryData,
     id: newId,
@@ -84,9 +179,7 @@ export const createEnquiry = (enquiryData: Omit<HomeLoanEnquiry, 'id' | 'created
     followUps: [],
   };
 
-  const currentList = getStoredEnquiries();
-  const updatedList = [newEnquiry, ...currentList];
-  saveEnquiries(updatedList);
+  cacheEnquiry(newEnquiry);
 
   // Push to Supabase asynchronously
   upsertEnquiryToSupabase(newEnquiry).catch(err => {
@@ -94,19 +187,17 @@ export const createEnquiry = (enquiryData: Omit<HomeLoanEnquiry, 'id' | 'created
   });
 
   // Send proper SMTP confirmation email to customer & alert to admin
-  sendEnquiryEmailViaSmtp(newEnquiry).catch(err => {
-    console.warn('Asynchronous SMTP email dispatch deferred:', err);
-  });
+  dispatchEnquiryEmails(newEnquiry);
 
   return newEnquiry;
 };
 
-export const updateEnquiryStatus = (
+export const updateEnquiryStatus = async (
   enquiryId: string,
   newStatus: EnquiryStatus,
   updatedBy: string,
   note?: string
-): HomeLoanEnquiry | null => {
+): Promise<HomeLoanEnquiry | null> => {
   const list = getStoredEnquiries();
   const index = list.findIndex(e => e.id === enquiryId);
   if (index === -1) return null;
@@ -136,14 +227,15 @@ export const updateEnquiryStatus = (
     console.warn('Supabase update failed:', err);
   });
 
-  return updatedItem;
+  // Persist through the live API so every admin session sees the change
+  return persistEnquiry(updatedItem);
 };
 
-export const updateEnquiryDetails = (
+export const updateEnquiryDetails = async (
   enquiryId: string,
   updates: Partial<HomeLoanEnquiry>,
   updatedBy: string
-): HomeLoanEnquiry | null => {
+): Promise<HomeLoanEnquiry | null> => {
   const list = getStoredEnquiries();
   const index = list.findIndex(e => e.id === enquiryId);
   if (index === -1) return null;
@@ -165,16 +257,17 @@ export const updateEnquiryDetails = (
     console.warn('Supabase update failed:', err);
   });
 
-  return updatedItem;
+  // Persist through the live API so every admin session sees the change
+  return persistEnquiry(updatedItem);
 };
 
-export const addFollowUpToEnquiry = (
+export const addFollowUpToEnquiry = async (
   enquiryId: string,
   date: string,
   time: string,
   notes: string,
   createdBy: string
-): FollowUpEntry | null => {
+): Promise<FollowUpEntry | null> => {
   const list = getStoredEnquiries();
   const index = list.findIndex(e => e.id === enquiryId);
   if (index === -1) return null;
@@ -203,10 +296,12 @@ export const addFollowUpToEnquiry = (
     console.warn('Supabase update failed:', err);
   });
 
+  // Persist through the live API so every admin session sees the follow-up
+  await persistEnquiry(item);
   return newFollowUp;
 };
 
-export const deleteEnquiry = (enquiryId: string): boolean => {
+export const deleteEnquiry = async (enquiryId: string): Promise<boolean> => {
   const list = getStoredEnquiries();
   const filtered = list.filter(e => e.id !== enquiryId);
   if (filtered.length === list.length) return false;
@@ -215,6 +310,12 @@ export const deleteEnquiry = (enquiryId: string): boolean => {
   deleteEnquiryFromSupabase(enquiryId).catch(err => {
     console.warn('Supabase delete failed:', err);
   });
+
+  try {
+    await apiJson(`enquiries/${encodeURIComponent(enquiryId)}`, { method: 'DELETE' });
+  } catch (e) {
+    console.warn('Enquiry API delete failed (removed from local cache only):', e);
+  }
   return true;
 };
 
@@ -231,7 +332,7 @@ export const getStoredStaff = (): AdminUser[] => {
   }
 };
 
-export const saveStaff = (staff: AdminUser[]): void => {
+export const saveStaff = async (staff: AdminUser[]): Promise<void> => {
   try {
     localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(staff));
     staff.forEach(s => {
@@ -239,6 +340,15 @@ export const saveStaff = (staff: AdminUser[]): void => {
     });
   } catch (e) {
     console.error('Failed to save staff', e);
+  }
+
+  try {
+    await apiJson<ApiListResponse<AdminUser>>('staff', {
+      method: 'PUT',
+      body: JSON.stringify(staff),
+    });
+  } catch (e) {
+    console.warn('Staff API sync failed (kept in local cache):', e);
   }
 };
 

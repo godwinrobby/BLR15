@@ -167,10 +167,10 @@ export const EligibilityWizard: React.FC<EligibilityWizardProps> = ({
   };
 
   // Convert Eligibility to Lead Enquiry
-  const handleSubmitLead = () => {
+  const handleSubmitLead = async () => {
     setIsSubmitting(true);
     try {
-      const newEnquiry = createEnquiry({
+      const newEnquiry = await createEnquiry({
         customerName: formData.fullName,
         mobile: formData.mobile,
         email: formData.email,

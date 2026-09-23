@@ -54,6 +54,8 @@ import {
   exportEnquiriesToCSV,
   formatINR,
   saveStaff,
+  refreshEnquiries,
+  refreshStaff,
 } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS, INITIAL_STAFF } from '../../data/initialData';
 
@@ -129,8 +131,19 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
 
   useEffect(() => {
     loadData();
+    // Pull the live data from /api and keep it fresh (other admin sessions,
+    // new website submissions, etc. show up without a manual page reload).
+    refreshEnquiries();
+    refreshStaff();
+    const liveTimer = window.setInterval(() => {
+      refreshEnquiries();
+      refreshStaff();
+    }, 30000);
     window.addEventListener('blr15-enquiries-updated', loadData);
-    return () => window.removeEventListener('blr15-enquiries-updated', loadData);
+    return () => {
+      window.clearInterval(liveTimer);
+      window.removeEventListener('blr15-enquiries-updated', loadData);
+    };
   }, []);
 
   // Filtered enquiries
@@ -200,9 +213,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
   ];
 
   // Handler for updating status
-  const handleStatusChange = (newStatus: EnquiryStatus, note?: string) => {
+  const handleStatusChange = async (newStatus: EnquiryStatus, note?: string) => {
     if (!selectedEnquiry) return;
-    const updated = updateEnquiryStatus(
+    const updated = await updateEnquiryStatus(
       selectedEnquiry.id,
       newStatus,
       currentAdmin.name,
@@ -215,9 +228,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
   };
 
   // Handler for assigning staff
-  const handleStaffAssign = (staffName: string) => {
+  const handleStaffAssign = async (staffName: string) => {
     if (!selectedEnquiry) return;
-    const updated = updateEnquiryDetails(
+    const updated = await updateEnquiryDetails(
       selectedEnquiry.id,
       { assignedStaff: staffName },
       currentAdmin.name
@@ -229,9 +242,9 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
   };
 
   // Handler for saving remarks
-  const handleRemarksSave = (remarks: string) => {
+  const handleRemarksSave = async (remarks: string) => {
     if (!selectedEnquiry) return;
-    const updated = updateEnquiryDetails(
+    const updated = await updateEnquiryDetails(
       selectedEnquiry.id,
       { internalRemarks: remarks },
       currentAdmin.name
@@ -243,11 +256,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
   };
 
   // Handler for adding follow up
-  const handleAddFollowUp = (e: React.FormEvent) => {
+  const handleAddFollowUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedEnquiry || !newFollowUpNotes) return;
 
-    addFollowUpToEnquiry(
+    await addFollowUpToEnquiry(
       selectedEnquiry.id,
       newFollowUpDate,
       newFollowUpTime,
@@ -257,7 +270,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
 
     // Update status to 'Follow-up' if it was 'New'
     if (selectedEnquiry.status === 'New') {
-      updateEnquiryStatus(
+      await updateEnquiryStatus(
         selectedEnquiry.id,
         'Follow-up',
         currentAdmin.name,

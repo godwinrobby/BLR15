@@ -28,6 +28,7 @@ import {
   createEnquiry,
   formatINR,
   getStoredEnquiries,
+  refreshEnquiries,
 } from '../../services/storageService';
 import { EmploymentType, PropertyType, HomeLoanEnquiry } from '../../types';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
@@ -79,16 +80,16 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
     return list.find(e => e.id === 'BLR15-0012') || null;
   });
 
-  const handleTrackSearch = (e: React.FormEvent) => {
+  const handleTrackSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    const list = getStoredEnquiries();
+    const list = await refreshEnquiries();
     const cleanTerm = searchId.trim().toLowerCase();
     const found = list.find(item => item.id.toLowerCase() === cleanTerm || item.mobile.includes(cleanTerm));
     setTrackedEnquiry(found || null);
   };
 
-  const handleMobSubmitEnquiry = () => {
-    const newEnq = createEnquiry({
+  const handleMobSubmitEnquiry = async () => {
+    const newEnq = await createEnquiry({
       customerName: mobData.name || 'Mobile Applicant',
       mobile: mobData.mobile || '9845012345',
       email: `${(mobData.name || 'applicant').toLowerCase().replace(/\s+/g, '')}@blr15.in`,
@@ -109,10 +110,10 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
     setMobSubmittedEnquiry(newEnq);
   };
 
-  const handleQuickEnquirySubmit = (e: React.FormEvent) => {
+  const handleQuickEnquirySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!enqForm.name || !enqForm.mobile) return;
-    const newEnq = createEnquiry({
+    const newEnq = await createEnquiry({
       customerName: enqForm.name,
       mobile: enqForm.mobile,
       email: `${enqForm.name.toLowerCase().replace(/\s+/g, '')}@blr15.in`,

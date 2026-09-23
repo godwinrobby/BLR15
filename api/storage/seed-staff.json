@@ -1,0 +1,26 @@
+[
+  {
+    "id": "staff-1",
+    "name": "Rajesh Kumar",
+    "email": "rajesh.k@blr15.in",
+    "role": "Super Admin",
+    "phone": "+91 98450 15150",
+    "active": true
+  },
+  {
+    "id": "staff-2",
+    "name": "Priya Sharma",
+    "email": "priya.s@blr15.in",
+    "role": "Admin",
+    "phone": "+91 98452 33410",
+    "active": true
+  },
+  {
+    "id": "staff-3",
+    "name": "Suresh Gowda",
+    "email": "suresh.g@blr15.in",
+    "role": "Loan Executive",
+    "phone": "+91 99001 88290",
+    "active": true
+  }
+]
