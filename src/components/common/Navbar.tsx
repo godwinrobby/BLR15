@@ -49,8 +49,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const navLinks = [
     { id: 'home', label: 'Home' },
     { id: 'home-loans', label: 'Home Loans', icon: Home },
-    { id: 'personal-loan', label: 'Personal Loan', icon: Wallet, badge: 'Instant' },
-    { id: 'car-loan', label: 'Car loans', icon: Car, badge: 'New & EV' },
+    { id: 'personal-loan', label: 'Personal Loan', icon: Wallet },
+    { id: 'car-loan', label: 'Car loans', icon: Car },
     { id: 'calculator', label: 'EMI Calculator', icon: Calculator },
     { id: 'about', label: 'About Us' },
     { id: 'contact', label: 'Contact' },
@@ -151,11 +151,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }`}
                 >
                   <span>{link.label}</span>
-                  {(link as any).badge && (
-                    <span className="text-[9px] font-black uppercase tracking-wider bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-full shadow-xs">
-                      {(link as any).badge}
-                    </span>
-                  )}
                   {isActive && (
                     <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full" />
                   )}
@@ -221,11 +216,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                   <span className="flex items-center gap-2.5">
                     {Icon && <Icon className="w-4 h-4 text-amber-600" />}
                     <span>{link.label}</span>
-                    {(link as any).badge && (
-                      <span className="text-[9px] font-black uppercase bg-amber-400 text-slate-950 px-1.5 py-0.5 rounded-full">
-                        {(link as any).badge}
-                      </span>
-                    )}
                   </span>
                   <ArrowRight className="w-4 h-4 text-slate-400" />
                 </button>
