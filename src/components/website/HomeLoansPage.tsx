@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Home,
   FileCheck,
@@ -15,7 +15,6 @@ import {
   ArrowUpRight,
   PhoneCall,
   Hammer,
-  ArrowRight,
   ArrowRightLeft,
   Building2,
   CreditCard,
@@ -34,17 +33,33 @@ interface HomeLoansPageProps {
   initialCategory?: 'home' | 'personal' | 'car';
 }
 
+// Hero quick-calculator defaults per loan category (aligned with the enquiry / EMI presets)
+const QUICK_CALC_DEFAULTS: Record<'home' | 'personal' | 'car', { amount: number; tenure: number; rate: number }> = {
+  home: { amount: 5000000, tenure: 20, rate: 8.5 },
+  personal: { amount: 500000, tenure: 3, rate: 10.49 },
+  car: { amount: 1200000, tenure: 7, rate: 8.75 },
+};
+
 export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
   onNavigate,
   onOpenEnquiry,
   initialCategory = 'home',
 }) => {
-  const [selectedCategory] = useState<'home' | 'personal' | 'car'>(initialCategory);
+  const [selectedCategory, setSelectedCategory] = useState<'home' | 'personal' | 'car'>(initialCategory);
 
   // Quick mini calculator in hero (same design as Home Page)
-  const [quickAmount, setQuickAmount] = useState<number>(5000000); // 50 Lakhs
-  const [quickTenure, setQuickTenure] = useState<number>(20);
-  const [quickRate, setQuickRate] = useState<number>(8.5);
+  const [quickAmount, setQuickAmount] = useState<number>(QUICK_CALC_DEFAULTS[initialCategory].amount);
+  const [quickTenure, setQuickTenure] = useState<number>(QUICK_CALC_DEFAULTS[initialCategory].tenure);
+  const [quickRate, setQuickRate] = useState<number>(QUICK_CALC_DEFAULTS[initialCategory].rate);
+
+  // Keep the visible category and calculator defaults in sync when the routed category changes
+  useEffect(() => {
+    const defaults = QUICK_CALC_DEFAULTS[initialCategory];
+    setSelectedCategory(initialCategory);
+    setQuickAmount(defaults.amount);
+    setQuickTenure(defaults.tenure);
+    setQuickRate(defaults.rate);
+  }, [initialCategory]);
 
   const quickEmi = calculateHomeLoanEmi(quickAmount, quickRate, quickTenure);
 
@@ -884,62 +899,438 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
 
   /* ───────────────── OTHER CATEGORY VIEW (Personal / Car) ───────────────── */
   const renderOtherCategoryView = () => {
-    const pageTitle = selectedCategory === 'personal' ? 'Personal Loans Made Simple' : 'Car Loans Made Simple';
+    const isPersonal = selectedCategory === 'personal';
+
+    const content = isPersonal
+      ? {
+          badge: 'BLR15 Personal Loans • Instant & Unsecured (Bangalore)',
+          headingTop: 'Personal Loans,',
+          headingHighlight: 'Made Simple',
+          subHeading: 'Zero Collateral. Fast Disbursal.',
+          description:
+            'Cover wedding expenses, medical emergencies, travel, education or any personal requirement with 100% paperless processing, no collateral security and a flexible repayment tenure.',
+          highlights: [
+            'No Collateral Required',
+            'Instant Approval Process',
+            '100% Paperless Processing',
+            'Attractive Interest Rates',
+            'Flexible Repayment Tenure',
+          ],
+          enquiryType: 'Personal Loan',
+          calculatorTitle: 'Quick Personal Loan EMI',
+          amountSlider: {
+            min: 50000,
+            max: 4000000,
+            step: 25000,
+            labels: ['₹50 Thousand', '₹20 Lakhs', '₹40 Lakhs'],
+          },
+          tenureSlider: { min: 1, max: 7, labels: ['1 Year', '4 Years', '7 Years'] },
+          rateSlider: { min: 10.25, max: 20, step: 0.05 },
+        }
+      : {
+          badge: 'BLR15 Car Loans • New, Used & EV (Bangalore)',
+          headingTop: 'Car Loans,',
+          headingHighlight: 'Drive Home Today',
+          subHeading: 'Up to 100% On-Road Funding',
+          description:
+            'Finance your new car, used car or electric vehicle with quick sanctions, special EV rates, pre-approved dealer tie-ups and repayment tenures up to 8 years.',
+          highlights: [
+            'Up to 100% On-Road Funding',
+            'Special Rates for EVs',
+            'Quick Sanction Process',
+            'Pre-Approved Dealer Tie-Ups',
+            'Tenure up to 8 Years',
+          ],
+          enquiryType: 'Car Loan',
+          calculatorTitle: 'Quick Car Loan EMI',
+          amountSlider: {
+            min: 100000,
+            max: 10000000,
+            step: 50000,
+            labels: ['₹1 Lakh', '₹50 Lakhs', '₹1 Crore'],
+          },
+          tenureSlider: { min: 1, max: 8, labels: ['1 Year', '5 Years', '8 Years'] },
+          rateSlider: { min: 8.25, max: 14, step: 0.05 },
+        };
 
     const bankRates = [
-      { bank: 'SBI', rate: '10.55% - 12.05%', fee: 'Up to 1%', emi: '₹2,149' },
-      { bank: 'HDFC Bank', rate: '10.50% - 21.00%', fee: 'Up to 2.50%', emi: '₹2,149' },
-      { bank: 'ICICI Bank', rate: '10.75% - 19.00%', fee: 'Up to 2.50%', emi: '₹2,162' },
+      { bank: 'SBI', rate: '10.55% - 12.05%', fee: 'Up to 1%' },
+      { bank: 'HDFC Bank', rate: '10.50% - 21.00%', fee: 'Up to 2.50%' },
+      { bank: 'ICICI Bank', rate: '10.75% - 19.00%', fee: 'Up to 2.50%' },
     ];
 
     return (
-      <div className="min-h-screen bg-slate-50 font-sans pb-20">
-        <section className="bg-[#0B1B3D] pt-16 pb-32 px-4 relative overflow-hidden">
-          <div className="max-w-6xl mx-auto text-center relative z-10">
-            <h1 className="text-4xl lg:text-5xl font-black text-white font-['Outfit'] leading-tight mb-6">
-              {pageTitle}
-            </h1>
-            <button
-              onClick={() => onNavigate('eligibility')}
-              className="px-8 py-4 bg-amber-500 hover:bg-amber-400 text-[#0B1B3D] font-bold rounded-xl transition-colors inline-flex items-center gap-2 cursor-pointer"
-            >
-              Check Eligibility <ArrowRight className="w-5 h-5" />
-            </button>
+      <div className="min-h-screen bg-slate-50 font-sans">
+        {/* Hero Section (same design as Home Page) */}
+        <section className="relative bg-gradient-to-b from-[#0B1B3D] via-[#0E224E] to-[#122A63] text-white pt-12 pb-20 overflow-hidden">
+          {/* Decorative Grid & Glow */}
+          <div className="absolute inset-0 bg-[radial-gradient(#F59E0B_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
+          <div className="absolute top-1/4 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-10 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+
+              {/* Left Content */}
+              <div className="lg:col-span-7 space-y-6">
+                {/* Badge */}
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-amber-400/30 text-amber-300 text-xs font-semibold tracking-wide">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  <span>{content.badge}</span>
+                </div>
+
+                {/* Headings */}
+                <div className="space-y-3">
+                  <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black font-['Outfit'] tracking-tight leading-[1.1]">
+                    {content.headingTop} <br />
+                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-amber-400 to-amber-200">
+                      {content.headingHighlight}
+                    </span>
+                  </h1>
+                  <p className="text-xl sm:text-2xl font-bold text-amber-400 font-['Outfit']">
+                    {content.subHeading}
+                  </p>
+                </div>
+
+                {/* Supporting Text */}
+                <p className="text-slate-300 text-base sm:text-lg leading-relaxed max-w-2xl font-normal">
+                  {content.description}
+                </p>
+
+                {/* Trust Benefit Points */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2">
+                  {content.highlights.map((point, i) => (
+                    <div
+                      key={i}
+                      className={`flex items-center gap-2 text-xs font-semibold text-slate-200 bg-white/5 border border-white/10 rounded-lg p-2.5 ${
+                        i === content.highlights.length - 1 ? 'col-span-2 sm:col-span-2' : ''
+                      }`}
+                    >
+                      <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                      <span>{point}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-4">
+                  <button
+                    onClick={() => onNavigate('eligibility', { loanType: content.enquiryType })}
+                    className="px-8 py-4 rounded-xl font-extrabold text-base bg-gradient-to-r from-amber-400 via-amber-500 to-amber-400 text-slate-950 shadow-xl shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+                  >
+                    <FileCheck className="w-5 h-5 stroke-[2.5]" />
+                    <span>Check Your Eligibility</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+
+                  <button
+                    onClick={() => onOpenEnquiry(content.enquiryType)}
+                    className="px-7 py-4 rounded-xl font-bold text-base bg-white/10 hover:bg-white/15 text-white border border-white/20 backdrop-blur-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <PhoneCall className="w-4 h-4 text-amber-400" />
+                    <span>Enquire Now</span>
+                  </button>
+                </div>
+
+                {/* Location pin note */}
+                <div className="flex items-center gap-2 text-xs text-slate-400 pt-2">
+                  <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                  <span>Office: {BLR15_OFFICE_DETAILS.fullAddress}</span>
+                </div>
+              </div>
+
+
+              {/* Right Card: Quick Interactive Loan Estimator */}
+              <div className="lg:col-span-5">
+                <div className="bg-white rounded-2xl p-6 sm:p-7 shadow-2xl border border-slate-100 text-slate-800 relative">
+                  {/* Ribbon */}
+                  <div className="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full bg-amber-500 text-slate-950 text-xs font-black uppercase tracking-wider shadow-md">
+                    Instant Estimate
+                  </div>
+
+                  <div className="flex items-center gap-2.5 mb-5 pb-3 border-b border-slate-100">
+                    <div className="p-2 rounded-lg bg-amber-50 text-amber-600">
+                      <Calculator className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h2 className="text-lg font-bold font-['Outfit'] text-[#0B1B3D]">
+                        {content.calculatorTitle}
+                      </h2>
+                      <p className="text-xs text-slate-500">
+                        Calculate your approximate monthly outflow
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Sliders */}
+                  <div className="space-y-4">
+                    {/* Amount Slider */}
+                    <div>
+                      <div className="flex justify-between items-center text-xs font-semibold mb-1.5">
+                        <span className="text-slate-600">Loan Amount:</span>
+                        <span className="text-base font-extrabold text-[#0B1B3D] font-['Outfit']">
+                          {formatINR(quickAmount)}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={content.amountSlider.min}
+                        max={content.amountSlider.max}
+                        step={content.amountSlider.step}
+                        value={quickAmount}
+                        onChange={e => setQuickAmount(Number(e.target.value))}
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span>{content.amountSlider.labels[0]}</span>
+                        <span>{content.amountSlider.labels[1]}</span>
+                        <span>{content.amountSlider.labels[2]}</span>
+                      </div>
+                    </div>
+
+                    {/* Tenure Slider */}
+                    <div>
+                      <div className="flex justify-between items-center text-xs font-semibold mb-1.5">
+                        <span className="text-slate-600">Tenure:</span>
+                        <span className="text-sm font-bold text-[#0B1B3D]">
+                          {quickTenure} Years ({quickTenure * 12} Months)
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={content.tenureSlider.min}
+                        max={content.tenureSlider.max}
+                        step={1}
+                        value={quickTenure}
+                        onChange={e => setQuickTenure(Number(e.target.value))}
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-400 mt-1">
+                        <span>{content.tenureSlider.labels[0]}</span>
+                        <span>{content.tenureSlider.labels[1]}</span>
+                        <span>{content.tenureSlider.labels[2]}</span>
+                      </div>
+                    </div>
+
+                    {/* Interest Rate */}
+                    <div>
+                      <div className="flex justify-between items-center text-xs font-semibold mb-1.5">
+                        <span className="text-slate-600">Interest Rate (p.a.):</span>
+                        <span className="text-sm font-bold text-amber-600">{quickRate}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={content.rateSlider.min}
+                        max={content.rateSlider.max}
+                        step={content.rateSlider.step}
+                        value={quickRate}
+                        onChange={e => setQuickRate(Number(e.target.value))}
+                        className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                      />
+                    </div>
+                  </div>
+
+
+                  {/* Result Box */}
+                  <div className="mt-5 p-4 rounded-xl bg-gradient-to-br from-slate-900 to-[#0B1B3D] text-white">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs text-amber-400/90 font-medium">Estimated Monthly EMI</span>
+                        <div className="text-2xl sm:text-3xl font-black font-['Outfit'] text-amber-400">
+                          {formatINR(quickEmi.emi)}
+                          <span className="text-xs text-slate-300 font-normal">/mo</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[11px] text-slate-400">Total Interest</span>
+                        <div className="text-sm font-bold text-slate-200">
+                          {formatINR(quickEmi.totalInterest)}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CTAs */}
+                  <div className="mt-5 space-y-2">
+                    <button
+                      onClick={() => onNavigate('eligibility', { loanAmount: quickAmount, loanType: content.enquiryType })}
+                      className="w-full py-3 rounded-xl font-extrabold text-sm bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <span>Check Your Exact Eligibility</span>
+                      <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                    <button
+                      onClick={() => onNavigate('calculator')}
+                      className="w-full py-2.5 rounded-xl font-bold text-xs text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Calculator className="w-3.5 h-3.5 text-amber-600" />
+                      <span>Open Full EMI Calculator</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </button>
+                    <p className="text-[11px] text-center text-slate-500">
+                      *Indicative calculation. Final offer based on bank assessment.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
           </div>
         </section>
-        <section className="max-w-4xl mx-auto px-4 -mt-16 relative z-20 mb-16">
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
-            <div className="p-6 border-b border-slate-200 bg-slate-50">
-              <h2 className="text-xl font-bold text-[#0B1B3D]">Compare Top Bank Rates</h2>
+        {/* Trust & Coverage Bar */}
+        <section className="bg-white border-y border-slate-200 py-6 px-4">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+              <div>
+                <span className="text-xs uppercase tracking-wider font-bold text-amber-600 block">
+                  Serving Districts Across Karnataka
+                </span>
+                <p className="text-sm font-semibold text-slate-700">
+                  Doorstep document collection &amp; dedicated advisor support
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-2">
+                {servingDistricts.map(district => (
+                  <span
+                    key={district}
+                    className="px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 hover:bg-amber-100 hover:text-amber-900 transition-colors"
+                  >
+                    {district}
+                  </span>
+                ))}
+                <span className="px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500 text-slate-950">
+                  + Other districts also
+                </span>
+              </div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
-                    <th className="p-4 font-bold">Bank</th>
-                    <th className="p-4 font-bold">Interest Rate</th>
-                    <th className="p-4 font-bold">Processing Fee</th>
-                    <th className="p-4 font-bold text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm divide-y divide-slate-100">
-                  {bankRates.map((bank, idx) => (
-                    <tr key={idx}>
-                      <td className="p-4 font-bold text-[#0B1B3D]">{bank.bank}</td>
-                      <td className="p-4 font-bold text-amber-600">{bank.rate}</td>
-                      <td className="p-4 text-slate-600">{bank.fee}</td>
-                      <td className="p-4 text-center">
-                        <button
-                          onClick={() => onOpenEnquiry(bank.bank)}
-                          className="px-4 py-2 bg-[#0B1B3D] hover:bg-slate-800 text-white text-xs font-bold rounded-lg cursor-pointer"
-                        >
-                          Apply
-                        </button>
-                      </td>
+          </div>
+        </section>
+
+        {/* Compare Bank Rates Section */}
+        <section className="py-20 px-4 sm:px-6 bg-slate-50">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+              <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold tracking-wide uppercase">
+                Compare Before You Apply
+              </span>
+              <h2 className="text-3xl sm:text-4xl font-black font-['Outfit'] text-[#0B1B3D]">
+                Compare Top Bank Rates
+              </h2>
+              <p className="text-slate-600 text-base">
+                Indicative interest rates and processing fees from leading banks. The final offer
+                depends on your income profile, employer category and credit score.
+              </p>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50 text-slate-600 text-xs uppercase border-b border-slate-200">
+                      <th className="p-4 font-bold">Bank</th>
+                      <th className="p-4 font-bold">Interest Rate</th>
+                      <th className="p-4 font-bold">Processing Fee</th>
+                      <th className="p-4 font-bold text-center">Action</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="text-sm divide-y divide-slate-100">
+                    {bankRates.map((bank, idx) => (
+                      <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                        <td className="p-4 font-bold text-[#0B1B3D]">{bank.bank}</td>
+                        <td className="p-4 font-bold text-amber-600">{bank.rate}</td>
+                        <td className="p-4 text-slate-600">{bank.fee}</td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => onOpenEnquiry(content.enquiryType)}
+                            className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+                          >
+                            Apply
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="mt-12 flex flex-col sm:flex-row items-center justify-center gap-3">
+              <button
+                onClick={() => onNavigate('eligibility', { loanType: content.enquiryType, loanAmount: quickAmount })}
+                className="px-8 py-3.5 rounded-xl font-extrabold text-sm bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/30 transition-all inline-flex items-center gap-2 cursor-pointer"
+              >
+                <FileCheck className="w-4 h-4 stroke-[2.5]" />
+                <span>Check Your Eligibility</span>
+              </button>
+              <button
+                onClick={() => onNavigate('calculator')}
+                className="px-7 py-3.5 rounded-xl font-bold text-sm bg-white border border-slate-300 text-[#0B1B3D] hover:bg-slate-50 hover:border-slate-400 transition-colors inline-flex items-center gap-2 cursor-pointer"
+              >
+                <Calculator className="w-4 h-4 text-amber-600" />
+                <span>Calculate Full EMI Schedule</span>
+                <ChevronRight className="w-4 h-4 text-amber-500" />
+              </button>
+            </div>
+          </div>
+        </section>
+
+        {/* Office & Direct Contact Section */}
+        <section className="py-16 px-4 sm:px-6 bg-slate-100">
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-white rounded-3xl p-8 sm:p-12 border border-slate-200 shadow-sm">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                <div className="lg:col-span-8 space-y-4">
+                  <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider">
+                    Visit or Call Our Office
+                  </span>
+                  <h2 className="text-2xl sm:text-3xl font-black text-[#0B1B3D] font-['Outfit']">
+                    Talk To A {isPersonal ? 'Personal' : 'Car'} Loan Advisor
+                  </h2>
+                  <p className="text-slate-600 text-sm leading-relaxed">
+                    Call or WhatsApp us to know the best available {isPersonal ? 'personal' : 'car'} loan
+                    offer for your profile, or visit our Jalahalli West office for a one-on-one consultation.
+                  </p>
+
+                  <div className="space-y-2 text-sm text-slate-700 pt-2">
+                    <div className="flex items-start gap-2.5">
+                      <MapPin className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+                      <span className="font-medium text-slate-800">
+                        {BLR15_OFFICE_DETAILS.fullAddress}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                      <Clock className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>{BLR15_OFFICE_DETAILS.workingHours}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4 flex flex-col gap-3">
+                  <a
+                    href={`tel:${BLR15_OFFICE_DETAILS.phone}`}
+                    className="w-full py-3.5 px-4 rounded-xl bg-[#0B1B3D] hover:bg-[#122A63] text-white font-bold text-sm text-center flex items-center justify-center gap-2 shadow-sm transition-colors"
+                  >
+                    <PhoneCall className="w-4 h-4 text-amber-400" />
+                    <span>Call {BLR15_OFFICE_DETAILS.phone}</span>
+                  </a>
+
+                  <a
+                    href={`https://wa.me/${BLR15_OFFICE_DETAILS.whatsapp}?text=Hello%20BLR15%20Team,%20I%20would%20like%20to%20discuss%20a%20${isPersonal ? 'personal' : 'car'}%20loan.`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm text-center flex items-center justify-center gap-2 shadow-sm transition-colors"
+                  >
+                    <span>Chat on WhatsApp</span>
+                  </a>
+
+                  <button
+                    onClick={() => onNavigate('contact')}
+                    className="w-full py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs text-center transition-colors cursor-pointer"
+                  >
+                    View Map &amp; Contact Details
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </section>
