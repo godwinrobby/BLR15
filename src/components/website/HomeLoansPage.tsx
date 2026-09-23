@@ -82,6 +82,20 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
     'Tumkur',
   ];
 
+  const ourServices = [
+    'ROI starts from 8%',
+    'Fast Approval Process',
+    'CIBIL Min 650',
+    'Minimum Documentation',
+    'We Do NRI Files',
+    'We Do Minimum 200 sqft',
+    'We Do Commercial Property Purchase',
+    'We Do Rajkaluve Property',
+    'We Do Without ITR',
+    'No Income Proof Required',
+    'We Do Cash Salary',
+  ];
+
   const loanTypes = [
     {
       icon: Home,
@@ -520,6 +534,54 @@ export const HomeLoansPage: React.FC<HomeLoansPageProps> = ({
           </div>
         </div>
       </section>
+
+      {/* Our Services Section */}
+      <section className="py-16 px-4 sm:px-6 bg-white border-y border-slate-200">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-3xl mx-auto mb-12 space-y-3">
+            <span className="px-3.5 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold tracking-wide uppercase">
+              Our Services
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black font-['Outfit'] text-[#0B1B3D]">
+              What We Arrange For You
+            </h2>
+            <p className="text-slate-600 text-base">
+              Home loans arranged from leading banks &amp; NBFCs with flexible eligibility, minimum
+              paperwork and support for non-standard income and property profiles.
+            </p>
+          </div>
+
+          <div className="bg-slate-50 rounded-2xl border border-slate-200/80 p-6 sm:p-8 lg:p-10">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-4">
+              {ourServices.map((service, i) => (
+                <li
+                  key={i}
+                  className={`flex items-start gap-3 ${
+                    i === ourServices.length - 1 ? 'sm:col-span-2 lg:col-span-2' : ''
+                  }`}
+                >
+                  <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0 mt-0.5 stroke-[2.5]" />
+                  <span className="text-sm font-semibold text-slate-700 leading-snug">
+                    {service}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="mt-10 text-center">
+            <button
+              onClick={() => onNavigate('eligibility')}
+              className="px-8 py-3.5 rounded-xl font-extrabold text-sm bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-lg shadow-amber-500/30 transition-all inline-flex items-center gap-2 cursor-pointer"
+            >
+              <FileCheck className="w-4 h-4 stroke-[2.5]" />
+              <span>Check Eligibility For These Services</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </section>
+
 
 
       {/* Loan Types Section */}
