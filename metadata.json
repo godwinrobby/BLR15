@@ -1,0 +1,6 @@
+{
+  "name": "BLR15 Home Loans",
+  "description": "BLR15 Home Loans lead-generation and eligibility checking platform. Turn your dreams into homes with competitive rates, EMI calculators, and expert assistance in Bangalore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
