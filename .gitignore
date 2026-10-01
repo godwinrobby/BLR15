@@ -13,3 +13,4 @@ coverage/
 # Runtime CRM data store (customer PII) — seed-*.json files stay committed
 old-api/storage/enquiries.json
 old-api/storage/staff.json
+blr15-api-deploy.tar.gz
