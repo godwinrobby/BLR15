@@ -17,6 +17,14 @@ export default defineConfig(() => {
       hmr: process.env.DISABLE_HMR !== 'true',
       // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
+      // Proxy the SPA's relative /api/... calls to the Laravel API during dev.
+      // Override the target with VITE_API_PROXY_TARGET when the API runs elsewhere.
+      proxy: {
+        '/api': {
+          target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8199',
+          changeOrigin: true,
+        },
+      },
     },
   };
 });

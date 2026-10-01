@@ -18,7 +18,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
-import { getStoredEnquiries, refreshEnquiries } from '../../services/storageService';
+import { getStoredEnquiries, getPublicEnquiryCount } from '../../services/storageService';
 
 interface NavbarProps {
   currentTab: string;
@@ -39,10 +39,13 @@ export const Navbar: React.FC<NavbarProps> = ({
   useEffect(() => {
     const updateCount = () => {
       const items = getStoredEnquiries();
-      setEnquiryCount(items.length);
+      if (items.length > 0) setEnquiryCount(items.length);
     };
     updateCount();
-    refreshEnquiries(); // live enquiry count from /api (updates via event)
+    // Live, PII-free count from the public API (falls back to the local cache).
+    getPublicEnquiryCount().then(count => {
+      if (count !== null) setEnquiryCount(count);
+    });
     window.addEventListener('blr15-enquiries-updated', updateCount);
     return () => window.removeEventListener('blr15-enquiries-updated', updateCount);
   }, []);

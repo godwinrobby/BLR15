@@ -12,7 +12,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { HomeLoanEnquiry, EnquiryStatus } from '../../types';
-import { getStoredEnquiries, refreshEnquiries, formatINR } from '../../services/storageService';
+import { getStoredEnquiries, trackEnquiry, formatINR } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
 
 interface TrackEnquiryPageProps {
@@ -27,10 +27,10 @@ export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }
   });
   const [hasSearched, setHasSearched] = useState(true);
 
-  // Keep the demo record in sync with the live /api store on mount.
+  // Keep the demo record in sync with the live API on mount (public track endpoint).
   useEffect(() => {
-    refreshEnquiries().then(list => {
-      setSearchedEnquiry(list.find(e => e.id === 'BLR15-0012') || null);
+    trackEnquiry('BLR15-0012').then(found => {
+      if (found) setSearchedEnquiry(found);
     });
   }, []);
 
@@ -44,16 +44,8 @@ export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }
       return;
     }
 
-    const list = await refreshEnquiries();
-    const cleanDigits = term.replace(/\D/g, '');
-
-    const found = list.find(item => {
-      const matchId = item.id.toLowerCase() === term;
-      const matchPhone = cleanDigits.length >= 7 && item.mobile.replace(/\D/g, '').includes(cleanDigits);
-      return matchId || matchPhone;
-    });
-
-    setSearchedEnquiry(found || null);
+    const found = await trackEnquiry(searchTerm.trim());
+    setSearchedEnquiry(found);
   };
 
   // 5 Public Status Stages from Prompt

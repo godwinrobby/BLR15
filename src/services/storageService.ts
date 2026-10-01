@@ -51,10 +51,10 @@ export const saveEnquiries = (enquiries: HomeLoanEnquiry[], syncToCloud: boolean
   }
 };
 
-/** Loads the live enquiry list from /api/enquiries into the local cache. */
+/** Loads the live enquiry list from /admin/enquiries (JWT) into the local cache. */
 export const refreshEnquiries = async (): Promise<HomeLoanEnquiry[]> => {
   try {
-    const body = await apiJson<ApiListResponse<HomeLoanEnquiry>>('enquiries');
+    const body = await apiJson<ApiListResponse<HomeLoanEnquiry>>('admin/enquiries');
     if (Array.isArray(body.data)) {
       saveEnquiries(body.data);
       return body.data;
@@ -69,7 +69,7 @@ export const refreshEnquiries = async (): Promise<HomeLoanEnquiry[]> => {
 /** Loads the live staff roster from /api/staff into the local cache. */
 export const refreshStaff = async (): Promise<AdminUser[]> => {
   try {
-    const body = await apiJson<ApiListResponse<AdminUser>>('staff');
+    const body = await apiJson<ApiListResponse<AdminUser>>('admin/staff');
     if (Array.isArray(body.data)) {
       localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(body.data));
       return body.data;
@@ -78,6 +78,30 @@ export const refreshStaff = async (): Promise<AdminUser[]> => {
   } catch (e) {
     console.warn('Live staff API unavailable, using local cache:', e);
     return getStoredStaff();
+  }
+};
+
+/** Public (unauthenticated) status lookup via /enquiries/track. */
+export const trackEnquiry = async (term: string): Promise<HomeLoanEnquiry | null> => {
+  if (!term.trim()) return null;
+  try {
+    const body = await apiJson<ApiItemResponse<HomeLoanEnquiry>>(
+      `enquiries/track?q=${encodeURIComponent(term.trim())}`
+    );
+    return body.data ?? null;
+  } catch (e) {
+    console.warn('Track enquiry failed:', e);
+    return null;
+  }
+};
+
+/** Public, PII-free enquiry total for the website "live count" badge. */
+export const getPublicEnquiryCount = async (): Promise<number | null> => {
+  try {
+    const body = await apiJson<{ success: boolean; data: { total: number } }>('enquiries/stats');
+    return body.data?.total ?? null;
+  } catch {
+    return null;
   }
 };
 
@@ -101,7 +125,7 @@ const dispatchEnquiryEmails = (enquiry: HomeLoanEnquiry): void => {
 const persistEnquiry = async (record: HomeLoanEnquiry): Promise<HomeLoanEnquiry> => {
   try {
     const body = await apiJson<ApiItemResponse<HomeLoanEnquiry>>(
-      `enquiries/${encodeURIComponent(record.id)}`,
+      `admin/enquiries/${encodeURIComponent(record.id)}`,
       { method: 'PUT', body: JSON.stringify(record) }
     );
     if (body?.data?.id) {
@@ -113,6 +137,28 @@ const persistEnquiry = async (record: HomeLoanEnquiry): Promise<HomeLoanEnquiry>
   } catch (e) {
     console.warn('Enquiry API sync failed (change kept in local cache):', e);
     return record;
+  }
+};
+
+/** Persists a status transition via PATCH /admin/enquiries/{id}/status. */
+const persistStatus = async (
+  enquiryId: string,
+  status: EnquiryStatus,
+  note?: string
+): Promise<HomeLoanEnquiry | null> => {
+  try {
+    const body = await apiJson<ApiItemResponse<HomeLoanEnquiry>>(
+      `admin/enquiries/${encodeURIComponent(enquiryId)}/status`,
+      { method: 'PATCH', body: JSON.stringify({ status, note }) }
+    );
+    if (body?.data?.id) {
+      saveEnquiries(getStoredEnquiries().map(item => (item.id === body.data.id ? body.data : item)));
+      return body.data;
+    }
+    return null;
+  } catch (e) {
+    console.warn('Enquiry status API sync failed (change kept in local cache):', e);
+    return null;
   }
 };
 
@@ -227,8 +273,9 @@ export const updateEnquiryStatus = async (
     console.warn('Supabase update failed:', err);
   });
 
-  // Persist through the live API so every admin session sees the change
-  return persistEnquiry(updatedItem);
+  // Persist through the dedicated status endpoint (server appends history).
+  const persisted = await persistStatus(enquiryId, newStatus, note);
+  return persisted ?? updatedItem;
 };
 
 export const updateEnquiryDetails = async (
@@ -296,8 +343,16 @@ export const addFollowUpToEnquiry = async (
     console.warn('Supabase update failed:', err);
   });
 
-  // Persist through the live API so every admin session sees the follow-up
-  await persistEnquiry(item);
+  // Persist through the dedicated follow-up endpoint.
+  try {
+    const body = await apiJson<ApiItemResponse<FollowUpEntry>>(
+      `admin/enquiries/${encodeURIComponent(enquiryId)}/follow-ups`,
+      { method: 'POST', body: JSON.stringify({ date, time, notes }) }
+    );
+    if (body?.data) return body.data;
+  } catch (e) {
+    console.warn('Follow-up API sync failed (kept in local cache):', e);
+  }
   return newFollowUp;
 };
 
@@ -312,7 +367,7 @@ export const deleteEnquiry = async (enquiryId: string): Promise<boolean> => {
   });
 
   try {
-    await apiJson(`enquiries/${encodeURIComponent(enquiryId)}`, { method: 'DELETE' });
+    await apiJson(`admin/enquiries/${encodeURIComponent(enquiryId)}`, { method: 'DELETE' });
   } catch (e) {
     console.warn('Enquiry API delete failed (removed from local cache only):', e);
   }
@@ -343,7 +398,7 @@ export const saveStaff = async (staff: AdminUser[]): Promise<void> => {
   }
 
   try {
-    await apiJson<ApiListResponse<AdminUser>>('staff', {
+    await apiJson<ApiListResponse<AdminUser>>('admin/staff/sync', {
       method: 'PUT',
       body: JSON.stringify(staff),
     });

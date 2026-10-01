@@ -28,7 +28,7 @@ import {
   createEnquiry,
   formatINR,
   getStoredEnquiries,
-  refreshEnquiries,
+  trackEnquiry,
 } from '../../services/storageService';
 import { EmploymentType, PropertyType, HomeLoanEnquiry } from '../../types';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
@@ -82,10 +82,8 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
 
   const handleTrackSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    const list = await refreshEnquiries();
-    const cleanTerm = searchId.trim().toLowerCase();
-    const found = list.find(item => item.id.toLowerCase() === cleanTerm || item.mobile.includes(cleanTerm));
-    setTrackedEnquiry(found || null);
+    const found = await trackEnquiry(searchId.trim());
+    setTrackedEnquiry(found);
   };
 
   const handleMobSubmitEnquiry = async () => {

@@ -18,3 +18,24 @@ View your app in AI Studio: https://ai.studio/apps/dd21f684-6127-4eea-9f64-2739b
 2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
 3. Run the app:
    `npm run dev`
+
+## Backend — Laravel JWT API (`/backend`)
+
+The App (website + mobile) and the Admin CRM are served by a **Laravel 13 REST API**
+with **JWT** auth (`php-open-source-saver/jwt-auth`).
+
+```bash
+cd backend
+composer install
+cp .env.example .env && php artisan key:generate && php artisan jwt:secret
+php artisan migrate --seed        # 3 staff logins + demo enquiries
+php artisan serve --port=8199
+```
+
+* Full endpoint map: [`backend/docs/API_MAPPING.md`](backend/docs/API_MAPPING.md)
+* Setup + seeded logins: [`backend/README.md`](backend/README.md)
+
+The SPA calls the API at `/api/v1/*`. During `npm run dev` the relative calls are
+proxied to the Laravel server via the Vite proxy (`VITE_API_PROXY_TARGET`,
+default `http://127.0.0.1:8199`). Seeded admin login: `rajesh.k@blr15.in` /
+`password123`.

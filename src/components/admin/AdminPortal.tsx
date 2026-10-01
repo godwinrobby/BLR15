@@ -58,22 +58,55 @@ import {
   refreshStaff,
 } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS, INITIAL_STAFF } from '../../data/initialData';
+import * as authService from '../../services/authService';
 
 interface AdminPortalProps {
   onSwitchView: (view: 'website' | 'mobile-app' | 'admin') => void;
 }
 
 export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
-  // Authentication state
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [currentAdmin, setCurrentAdmin] = useState<AdminUser>({
-    id: 'staff-1',
-    name: 'Rajesh Kumar',
-    email: 'rajesh.k@blr15.in',
-    role: 'Super Admin',
-    phone: '+91 98450 15150',
-    active: true,
-  });
+  // Authentication state — JWT-backed (see services/authService.ts).
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => authService.isAuthenticated());
+  const [currentAdmin, setCurrentAdmin] = useState<AdminUser>(
+    () => authService.getCurrentUser() ?? INITIAL_STAFF[0]
+  );
+  const [loginEmail, setLoginEmail] = useState('rajesh.k@blr15.in');
+  const [loginPassword, setLoginPassword] = useState('password123');
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  /** Signs in via the Laravel JWT API and stores the token. */
+  const handleLogin = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoginError(null);
+    setIsLoggingIn(true);
+    try {
+      const user = await authService.login(loginEmail.trim(), loginPassword);
+      setCurrentAdmin(user);
+      setIsAuthenticated(true);
+    } catch (err: any) {
+      setLoginError(err?.message || 'Unable to sign in. Check your email and password.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  /** Demo convenience: signs in as a seeded staff member (password123). */
+  const handleQuickLogin = async (member: AdminUser) => {
+    setLoginError(null);
+    try {
+      const user = await authService.login(member.email, 'password123');
+      setCurrentAdmin(user);
+      setIsAuthenticated(true);
+    } catch (err: any) {
+      setLoginError(err?.message || 'Demo sign-in failed — is the API running?');
+    }
+  };
+
+  const handleLogout = async () => {
+    await authService.logout();
+    setIsAuthenticated(false);
+  };
 
   const [activeSection, setActiveSection] = useState<'dashboard' | 'enquiries' | 'followups' | 'reports' | 'database' | 'smtp' | 'settings'>('dashboard');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
@@ -129,9 +162,18 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     setStaffList(getStoredStaff());
   };
 
+  // Drop back to the login screen whenever the JWT expires / is rejected.
   useEffect(() => {
+    const onExpired = () => setIsAuthenticated(false);
+    window.addEventListener(authService.AUTH_EXPIRED_EVENT, onExpired);
+    return () => window.removeEventListener(authService.AUTH_EXPIRED_EVENT, onExpired);
+  }, []);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
     loadData();
-    // Pull the live data from /api and keep it fresh (other admin sessions,
+    // Pull the live data from the API and keep it fresh (other admin sessions,
     // new website submissions, etc. show up without a manual page reload).
     refreshEnquiries();
     refreshStaff();
@@ -144,7 +186,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
       window.clearInterval(liveTimer);
       window.removeEventListener('blr15-enquiries-updated', loadData);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   // Filtered enquiries
   const filteredEnquiries = useMemo(() => {
@@ -318,19 +360,15 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
             </p>
           </div>
 
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              setIsAuthenticated(true);
-            }}
-            className="space-y-4"
-          >
+          <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-1">
               <label className="text-xs font-bold text-slate-700 uppercase">Email Address</label>
               <input
                 type="email"
-                defaultValue="rajesh.k@blr15.in"
+                value={loginEmail}
+                onChange={e => setLoginEmail(e.target.value)}
                 required
+                autoComplete="username"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-amber-500"
               />
             </div>
@@ -344,17 +382,27 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
               </div>
               <input
                 type="password"
-                defaultValue="password123"
+                value={loginPassword}
+                onChange={e => setLoginPassword(e.target.value)}
                 required
+                autoComplete="current-password"
                 className="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm focus:ring-2 focus:ring-amber-500"
               />
             </div>
 
+            {loginError && (
+              <div className="flex items-start gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{loginError}</span>
+              </div>
+            )}
+
             <button
               type="submit"
-              className="w-full py-3 rounded-xl bg-[#0B1B3D] hover:bg-[#122A63] text-white font-extrabold text-sm shadow-md transition-colors"
+              disabled={isLoggingIn}
+              className="w-full py-3 rounded-xl bg-[#0B1B3D] hover:bg-[#122A63] disabled:opacity-60 text-white font-extrabold text-sm shadow-md transition-colors"
             >
-              Sign In to Admin Panel
+              {isLoggingIn ? 'Signing In…' : 'Sign In to Admin Panel'}
             </button>
           </form>
 
@@ -366,30 +414,21 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  setCurrentAdmin(staffList[0] || INITIAL_STAFF[0]);
-                  setIsAuthenticated(true);
-                }}
+                onClick={() => handleQuickLogin(staffList[0] || INITIAL_STAFF[0])}
                 className="p-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-[#0B1B3D] text-[11px] font-bold border border-amber-200"
               >
                 Super Admin
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setCurrentAdmin(staffList[1] || INITIAL_STAFF[1]);
-                  setIsAuthenticated(true);
-                }}
+                onClick={() => handleQuickLogin(staffList[1] || INITIAL_STAFF[1])}
                 className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 text-[11px] font-bold border border-blue-200"
               >
                 Admin
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setCurrentAdmin(staffList[2] || INITIAL_STAFF[2]);
-                  setIsAuthenticated(true);
-                }}
+                onClick={() => handleQuickLogin(staffList[2] || INITIAL_STAFF[2])}
                 className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold border border-slate-300"
               >
                 Loan Exec
@@ -572,7 +611,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
                 </div>
               </div>
               <button
-                onClick={() => setIsAuthenticated(false)}
+                onClick={handleLogout}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors"
                 title="Sign Out"
               >

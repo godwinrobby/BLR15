@@ -1,20 +1,16 @@
 import { HomeLoanEnquiry } from '../types';
+import { apiFetch } from './apiClient';
 
 /**
- * The backend API is the PHP application in /api (PHPMailer based).
- * Paths are intentionally relative so the SPA works both at the domain root
- * and inside a sub-directory (e.g. XAMPP http://localhost/BLR15/).
+ * SMTP + email endpoints are served by the BLR15 Laravel API (/api/v1):
+ *   POST emails/enquiry        — dispatch confirmation + admin alert
+ *   GET  settings/smtp         — read SMTP config (JWT)
+ *   PUT  settings/smtp         — save SMTP config (JWT)
+ *   POST settings/smtp/test    — verify credentials (JWT)
+ *
+ * The JWT is attached automatically by apiFetch. The SMTP + email responses keep
+ * the SAME top-level shape the previous PHP backend returned.
  */
-const API_BASE = 'api';
-
-async function apiFetch(route: string, init?: RequestInit): Promise<Response> {
-  let response = await fetch(`${API_BASE}/${route}`, init);
-  if (response.status === 404) {
-    // Fallback for servers without URL rewriting: hit the front controller directly.
-    response = await fetch(`${API_BASE}/index.php?route=${encodeURIComponent(route)}`, init);
-  }
-  return response;
-}
 
 export interface EmailDispatchResult {
   success: boolean;
@@ -42,7 +38,7 @@ export interface SmtpConfigResponse {
  */
 export async function sendEnquiryEmailViaSmtp(enquiry: HomeLoanEnquiry): Promise<EmailDispatchResult> {
   try {
-    const response = await apiFetch('send-enquiry-email', {
+    const response = await apiFetch('emails/enquiry', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -82,7 +78,7 @@ export async function sendEnquiryEmailViaSmtp(enquiry: HomeLoanEnquiry): Promise
  */
 export async function getSmtpConfigStatus(): Promise<SmtpConfigResponse | null> {
   try {
-    const response = await apiFetch('smtp-config');
+    const response = await apiFetch('settings/smtp');
     if (!response.ok) return null;
     return await response.json();
   } catch (e) {
@@ -103,8 +99,8 @@ export async function saveSmtpSettings(config: {
   adminEmail: string;
 }): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    const response = await apiFetch('save-smtp-config', {
-      method: 'POST',
+    const response = await apiFetch('settings/smtp', {
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(config),
     });
@@ -127,7 +123,7 @@ export async function testSmtpConnection(payload: {
   toEmail: string;
 }): Promise<{ success: boolean; message?: string; error?: string }> {
   try {
-    const response = await apiFetch('test-smtp', {
+    const response = await apiFetch('settings/smtp/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
