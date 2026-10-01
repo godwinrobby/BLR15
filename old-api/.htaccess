@@ -11,7 +11,7 @@ RewriteRule ^vendor/ - [F]
 # Deny direct access to the live data store (customer PII / staff records)
 RewriteRule ^storage/ - [F]
 
-# Route extensionless API calls (/api/<route>) to the front controller
+# Route extensionless API calls (/old-api/<route>) to the front controller
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule ^(.*)$ index.php?route=$1 [QSA,L]

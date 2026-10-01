@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 /**
  * Router for PHP's built-in web server (no Apache/.htaccess needed):
- *   cd api && php -S 127.0.0.1:8080 router.php
+ *   cd old-api && php -S 127.0.0.1:8080 router.php
  */
 
 $path = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
@@ -22,7 +22,12 @@ if ($path !== '/' && is_file($file)) {
 }
 
 $route = ltrim($path, '/');
-if (str_starts_with($route, 'api/')) {
+// Strip the mount point: the directory is now `old-api`, but keep honouring
+// an `api/` prefix so a copy served straight from /api/ still routes.
+$prefix = basename(__DIR__) . '/';
+if (str_starts_with($route, $prefix)) {
+    $route = substr($route, strlen($prefix));
+} elseif (str_starts_with($route, 'api/')) {
     $route = substr($route, 4);
 }
 // Keep an explicit ?route= query (frontend fallback) — only derive it from the path otherwise.

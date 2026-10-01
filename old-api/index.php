@@ -5,13 +5,13 @@ declare(strict_types=1);
  * BLR15 PHP API — front controller.
  *
  * Routes (extensionless, rewritten here by .htaccess or router.php):
- *   GET  /api/health             → service status
- *   GET  /api/smtp-config        → current SMTP configuration (no password)
- *   POST /api/send-enquiry-email → customer confirmation + admin lead alert (PHPMailer)
- *   POST /api/save-smtp-config   → persist SMTP settings to ../.smtp-config.json
- *   POST /api/test-smtp          → verify SMTP credentials & send a test email
- *   GET/POST/PUT/DELETE /api/enquiries[/{id}] → live CRM enquiry store (JSON file)
- *   GET/PUT /api/staff           → live staff roster store (JSON file)
+ *   GET  /old-api/health             → service status
+ *   GET  /old-api/smtp-config        → current SMTP configuration (no password)
+ *   POST /old-api/send-enquiry-email → customer confirmation + admin lead alert (PHPMailer)
+ *   POST /old-api/save-smtp-config   → persist SMTP settings to ../.smtp-config.json
+ *   POST /old-api/test-smtp          → verify SMTP credentials & send a test email
+ *   GET/POST/PUT/DELETE /old-api/enquiries[/{id}] → live CRM enquiry store (JSON file)
+ *   GET/PUT /old-api/staff           → live staff roster store (JSON file)
  */
 
 require __DIR__ . '/bootstrap.php';
@@ -31,9 +31,13 @@ function resolve_route(): string
         return trim($_SERVER['PATH_INFO'], '/');
     }
     $uri = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/';
-    $pos = strpos($uri, '/api/');
-    if ($pos !== false) {
-        return trim(substr($uri, $pos + 5), '/');
+    // Strip the mount point. This directory is now `old-api`, but keep
+    // honouring `/old-api/` too so a copy still mounted at /old-api/ keeps working.
+    foreach (['/' . basename(__DIR__) . '/', '/api/'] as $mount) {
+        $pos = strpos($uri, $mount);
+        if ($pos !== false) {
+            return trim(substr($uri, $pos + strlen($mount)), '/');
+        }
     }
     $segment = trim($uri, '/');
     if ($segment !== '' && !str_contains($segment, '.')) {
@@ -63,7 +67,7 @@ function handle_health(): never
 }
 
 // ---------------------------------------------------------------
-// 2) GET /api/smtp-config — parity with server.ts GET handler
+// 2) GET /old-api/smtp-config — parity with server.ts GET handler
 // ---------------------------------------------------------------
 function handle_smtp_config(): never
 {
@@ -80,7 +84,7 @@ function handle_smtp_config(): never
 }
 
 // ---------------------------------------------------------------
-// 3) POST /api/send-enquiry-email — parity with server.ts handler
+// 3) POST /old-api/send-enquiry-email — parity with server.ts handler
 // ---------------------------------------------------------------
 function handle_send_enquiry(): never
 {
@@ -149,7 +153,7 @@ function handle_send_enquiry(): never
 }
 
 // ---------------------------------------------------------------
-// 4) POST /api/save-smtp-config — parity with server.ts handler
+// 4) POST /old-api/save-smtp-config — parity with server.ts handler
 // ---------------------------------------------------------------
 function handle_save_smtp_config(): never
 {
@@ -170,7 +174,7 @@ function handle_save_smtp_config(): never
 }
 
 // ---------------------------------------------------------------
-// 5) POST /api/test-smtp — parity with server.ts handler
+// 5) POST /old-api/test-smtp — parity with server.ts handler
 // ---------------------------------------------------------------
 function handle_test_smtp(): never
 {
@@ -232,7 +236,7 @@ function handle_test_smtp(): never
 }
 
 // ---------------------------------------------------------------
-// 6) /api/enquiries — live CRM store backing the /admin portal
+// 6) /old-api/enquiries — live CRM store backing the /admin portal
 // ---------------------------------------------------------------
 function method_not_allowed(array $allow): never
 {
@@ -318,7 +322,7 @@ function handle_enquiries(string $method, ?string $pathId): never
 }
 
 // ---------------------------------------------------------------
-// 7) /api/staff — live staff roster store (full-list replace)
+// 7) /old-api/staff — live staff roster store (full-list replace)
 // ---------------------------------------------------------------
 function handle_staff(string $method): never
 {

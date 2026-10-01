@@ -11,5 +11,5 @@ coverage/
 .smtp-config.json
 
 # Runtime CRM data store (customer PII) — seed-*.json files stay committed
-api/storage/enquiries.json
-api/storage/staff.json
+old-api/storage/enquiries.json
+old-api/storage/staff.json

@@ -1,0 +1,7 @@
+{
+    "name": "blr15/php-api",
+    "description": "BLR15 Home Loans PHP API (PHPMailer) - enquiry emails & SMTP admin endpoints",
+    "require": {
+        "phpmailer/phpmailer": "^6.9"
+    }
+}

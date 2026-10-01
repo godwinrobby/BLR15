@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Mail;
  * Dispatches enquiry emails using the active SMTP configuration.
  *
  * When no SMTP credentials are configured the API runs in "simulated" mode
- * (matches server.ts jsonTransport / api/index.php) so the forms and admin
+ * (matches server.ts jsonTransport / old-api/index.php) so the forms and admin
  * panel keep working without a live mailbox.
  */
 class MailService
@@ -64,7 +64,7 @@ class MailService
      * Verify a candidate SMTP configuration and send a test email.
      *
      * With blank credentials the API reports a simulated success (parity with
-     * api/index.php / server.ts jsonTransport) so the admin "Test" button works
+     * old-api/index.php / server.ts jsonTransport) so the admin "Test" button works
      * before SMTP is configured.
      *
      * @param  array<string, mixed>  $override
@@ -95,7 +95,7 @@ class MailService
     }
 
     /**
-     * Locally generated Message-ID (mirrors api/index.php simulated_message_id).
+     * Locally generated Message-ID (mirrors old-api/index.php simulated_message_id).
      */
     private function simulatedMessageId(): string
     {

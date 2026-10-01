@@ -16,7 +16,7 @@ class EnquirySeeder extends Seeder
 {
     public function run(): void
     {
-        $path = base_path('../api/storage/seed-enquiries.json');
+        $path = base_path('../old-api/storage/seed-enquiries.json');
 
         if (! is_file($path)) {
             Enquiry::factory()->count(12)->create();

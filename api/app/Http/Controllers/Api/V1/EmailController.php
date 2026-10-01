@@ -10,7 +10,7 @@ use Throwable;
 
 /**
  * Public email dispatch endpoint — parity with the legacy
- * POST /api/send-enquiry-email (server.ts / api/index.php).
+ * POST /api/send-enquiry-email (server.ts / old-api/index.php).
  *
  * Responds with the SAME top-level shape the React emailService reads:
  *   { success, isSimulated, customerEmailSent, adminEmailSent, customerEmail, adminEmail }

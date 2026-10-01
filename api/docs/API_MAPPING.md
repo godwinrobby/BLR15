@@ -108,7 +108,7 @@ Authentication is **JWT** (`php-open-source-saver/jwt-auth`). Send the token as
 
 Verified against every `apiJson` / `apiFetch` call site in `src/**`.
 **14 of the 36 routes are called by the UI today**, and all 36 are live
-(`backend/docs/API_MAPPING.md` §8 shows the verification run).
+(`api/docs/API_MAPPING.md` §8 shows the verification run).
 
 ### 4.1 Wired & live
 
@@ -207,7 +207,7 @@ Behaviours confirmed during the run:
 
 * **Simulated email mode** — `POST /emails/enquiry` and `POST /settings/smtp/test`
   both return `200` with `isSimulated: true` while SMTP credentials are blank,
-  matching `api/index.php`'s `simulated_message_id()` branch.
+  matching `old-api/index.php`'s `simulated_message_id()` branch.
 * **Full CRUD cycle** — create (`201`) → read (`200`) → update (`200`) →
   status (`200`) → follow-up create (`201`) + complete (`200`) → delete (`200`).
 * **JWT lifecycle** — `login → me → change-password → refresh → logout`,
@@ -217,7 +217,7 @@ Behaviours confirmed during the run:
 The automated suite backs this up:
 
 ```bash
-cd backend
+cd api
 php artisan test          # 24 passed (90 assertions)
 ./vendor/bin/pint --test  # style clean
 ```

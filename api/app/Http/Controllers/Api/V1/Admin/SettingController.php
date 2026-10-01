@@ -79,7 +79,7 @@ class SettingController extends Controller
             'success' => true,
             'message' => "SMTP test email successfully sent to {$recipient}!",
             'messageId' => $result['messageId'],
-            // Legacy parity: api/index.php flags simulated deliveries.
+            // Legacy parity: old-api/index.php flags simulated deliveries.
             ...($result['isSimulated'] ? ['isSimulated' => true] : []),
         ]);
     }
