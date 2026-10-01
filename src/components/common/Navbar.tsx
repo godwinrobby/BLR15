@@ -1,15 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { BLR15Logo } from './BLR15Logo';
 import {
   Menu,
   X,
   Phone,
   FileCheck,
-  Smartphone,
-  ShieldCheck,
   Search,
   ArrowRight,
-  Cloud,
   Home,
   Wallet,
   Car,
@@ -18,37 +15,17 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
-import { getStoredEnquiries, getPublicEnquiryCount } from '../../services/storageService';
 
 interface NavbarProps {
   currentTab: string;
   onNavigate: (tab: string) => void;
-  onSwitchView: (view: 'website' | 'mobile-app' | 'admin') => void;
-  activeView: 'website' | 'mobile-app' | 'admin';
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentTab,
   onNavigate,
-  onSwitchView,
-  activeView,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [enquiryCount, setEnquiryCount] = useState(125);
-
-  useEffect(() => {
-    const updateCount = () => {
-      const items = getStoredEnquiries();
-      if (items.length > 0) setEnquiryCount(items.length);
-    };
-    updateCount();
-    // Live, PII-free count from the public API (falls back to the local cache).
-    getPublicEnquiryCount().then(count => {
-      if (count !== null) setEnquiryCount(count);
-    });
-    window.addEventListener('blr15-enquiries-updated', updateCount);
-    return () => window.removeEventListener('blr15-enquiries-updated', updateCount);
-  }, []);
 
   const navLinks = [
     { id: 'home', label: 'Home' },
@@ -85,43 +62,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <Search className="w-3.5 h-3.5" />
               <span>Track Enquiry</span>
-            </button>
-
-            <span className="text-slate-600">|</span>
-
-            {/* Mobile App View Toggle */}
-            <button
-              onClick={() => onSwitchView('mobile-app')}
-              className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs transition-colors ${
-                activeView === 'mobile-app'
-                  ? 'bg-amber-500 text-slate-950 font-bold'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-800'
-              }`}
-              title="Experience Native Mobile App View"
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span className="hidden md:inline">Mobile App View</span>
-            </button>
-
-            {/* Admin Portal Toggle */}
-            <button
-              onClick={() => onSwitchView('admin')}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded text-xs transition-colors ${
-                activeView === 'admin'
-                  ? 'bg-amber-400 text-slate-950 font-bold'
-                  : 'bg-slate-800 text-amber-300 hover:bg-slate-700 font-medium'
-              }`}
-              title="Switch to Admin Portal"
-            >
-              <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
-              <span>Admin</span>
-              <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
-                <Cloud className="w-3 h-3" />
-                <span>Cloud</span>
-              </span>
-              <span className="ml-0.5 bg-amber-500 text-slate-950 text-[10px] px-1 py-0.2 rounded-full font-bold">
-                {enquiryCount}
-              </span>
             </button>
           </div>
         </div>
@@ -249,17 +189,6 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               <FileCheck className="w-5 h-5 stroke-[2.5]" />
               Check Eligibility (Instant)
-            </button>
-
-            <button
-              onClick={() => {
-                onSwitchView('mobile-app');
-                setIsMobileMenuOpen(false);
-              }}
-              className="w-full py-2.5 rounded-xl font-semibold text-center bg-slate-100 text-slate-800 flex items-center justify-center gap-2 text-sm"
-            >
-              <Smartphone className="w-4 h-4 text-slate-600" />
-              Switch to Native Mobile App View
             </button>
           </div>
         </div>

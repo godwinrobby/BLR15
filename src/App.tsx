@@ -220,8 +220,6 @@ export function App() {
       <Navbar
         currentTab={activeTab}
         onNavigate={handleNavigate}
-        activeView={viewMode}
-        onSwitchView={handleSwitchView}
       />
 
       {/* Main Routed Page Content */}
