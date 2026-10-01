@@ -26,11 +26,12 @@ with **JWT** auth (`php-open-source-saver/jwt-auth`).
 
 ```bash
 cd backend
-composer install
-cp .env.example .env && php artisan key:generate && php artisan jwt:secret
-php artisan migrate --seed        # 3 staff logins + demo enquiries
+composer setup                 # install + .env + APP_KEY/JWT_SECRET + migrate --seed + npm build
 php artisan serve --port=8199
 ```
+
+> `composer setup` only fills in `APP_KEY`/`JWT_SECRET` when they are empty, so it is safe
+> to run again. It ends with `npm run build` because `GET /` uses `@vite`.
 
 * Full endpoint map: [`backend/docs/API_MAPPING.md`](backend/docs/API_MAPPING.md)
 * Setup + seeded logins: [`backend/README.md`](backend/README.md)

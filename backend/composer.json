@@ -1,9 +1,9 @@
 {
     "$schema": "https://getcomposer.org/schema.json",
-    "name": "laravel/laravel",
+    "name": "blr15/laravel-api",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
-    "keywords": ["laravel", "framework"],
+    "description": "BLR15 Home Loans — Laravel 13 JWT REST API (website + mobile + admin CRM) under /api/v1.",
+    "keywords": ["blr15", "laravel", "jwt", "rest-api"],
     "license": "MIT",
     "require": {
         "php": "^8.3",
@@ -36,8 +36,9 @@
         "setup": [
             "composer install",
             "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
+            "@php -r '$env=file_get_contents(\".env\"); if(!preg_match(\"/^APP_KEY=.+$/m\",$env)){passthru(PHP_BINARY.\" artisan key:generate --force\",$rc);exit($rc);}'",
+            "@php -r '$env=file_get_contents(\".env\"); if(!preg_match(\"/^JWT_SECRET=.+$/m\",$env)){passthru(PHP_BINARY.\" artisan jwt:secret --force\",$rc);exit($rc);}'",
+            "@php artisan migrate --seed --force",
             "npm install --ignore-scripts",
             "npm run build"
         ],

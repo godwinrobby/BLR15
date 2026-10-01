@@ -14,6 +14,21 @@ the React-caller → endpoint table.
 
 ## Setup
 
+### One command
+
+```bash
+cd backend
+composer setup
+```
+
+`composer setup` runs `composer install`, creates `.env` from `.env.example` when missing,
+sets `APP_KEY` **and** `JWT_SECRET` only if they are still empty (so it is safe to re-run —
+neither key is rotated), runs `migrate --seed`, then `npm install && npm run build`.
+The npm step is required: `GET /` renders `resources/views/welcome.blade.php`, which uses
+`@vite` and therefore needs `public/build/manifest.json` (that directory is git-ignored).
+
+### Step by step (the same thing, spelled out)
+
 ```bash
 cd backend
 composer install
