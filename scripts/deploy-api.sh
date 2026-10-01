@@ -123,7 +123,29 @@ if [[ $DRY_RUN -eq 0 ]]; then
   echo "==> Running migrations..."
   ssh_to "cd '${REMOTE_DIR}' && ${REMOTE_PHP} artisan migrate --force"
 
-  ssh_to "cd '${REMOTE_DIR}' && ${REMOTE_PHP} artisan config:clear && ${REMOTE_PHP} artisan route:clear && ${REMOTE_PHP} artisan cache:clear || true"
+  # --- Cache: clear stale artifacts FIRST, then re-optimize ------------------
+  # The hPanel helper runs `optimize` then `optimize:clear`, which builds the
+  # cache and immediately throws it away. Order here is deliberate: clear the
+  # caches that still reference the OLD code/env, then rebuild.
+  # `session:clear` and `lighthouse:clear-cache` are omitted on purpose —
+  # the first was removed in Laravel 11 and this app is on 13, the second
+  # requires laravel/lighthouse which is not a dependency.
+  # `|| true` keeps a cache command from aborting the deploy.
+  echo "==> Clearing caches..."
+  ssh_to "cd '${REMOTE_DIR}' \
+    && ${REMOTE_PHP} artisan config:clear \
+    && ${REMOTE_PHP} artisan route:clear \
+    && ${REMOTE_PHP} artisan view:clear \
+    && ${REMOTE_PHP} artisan cache:clear \
+    && ${REMOTE_PHP} artisan clear-compiled \
+    && ${COMPOSER_BIN:-composer} dump-autoload -o \
+    || true"
+
+  echo "==> Re-optimizing caches..."
+  ssh_to "cd '${REMOTE_DIR}' && ${REMOTE_PHP} artisan optimize || true"
+
+  # Idempotent; -f refreshes an existing link without erroring.
+  ssh_to "cd '${REMOTE_DIR}' && ${REMOTE_PHP} artisan storage:link -f || true"
 
   echo "==> Fixing ownership and permissions..."
   ssh_to "chown -R '${SSH_USER}:${SSH_USER}' '${REMOTE_DIR}' \
