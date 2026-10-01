@@ -1,5 +1,4 @@
 import { HomeLoanEnquiry, EnquiryStatus, FollowUpEntry, StatusHistoryEntry, AdminUser } from '../types';
-import { INITIAL_ENQUIRIES, INITIAL_STAFF } from '../data/initialData';
 import { sendEnquiryEmailViaSmtp } from './emailService';
 import { apiJson, ApiError } from './apiClient';
 import type { ApiListResponse, ApiItemResponse } from './apiClient';
@@ -8,17 +7,22 @@ const ENQUIRIES_STORAGE_KEY = 'blr15_enquiries_v1';
 const STAFF_STORAGE_KEY = 'blr15_staff_v1';
 const SETTINGS_STORAGE_KEY = 'blr15_settings_v1';
 
+/**
+ * Local cache of enquiries. The Laravel API is the single source of truth —
+ * there is no bundled demo dataset any more, so a cold start is an empty list
+ * that refreshEnquiries() repopulates from /api/v1/admin/enquiries.
+ */
 export const getStoredEnquiries = (): HomeLoanEnquiry[] => {
   try {
     const raw = localStorage.getItem(ENQUIRIES_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(INITIAL_ENQUIRIES));
-      return INITIAL_ENQUIRIES;
+      localStorage.setItem(ENQUIRIES_STORAGE_KEY, '[]');
+      return [];
     }
     return JSON.parse(raw);
   } catch (e) {
     console.error('Failed to load enquiries', e);
-    return INITIAL_ENQUIRIES;
+    return [];
   }
 };
 
@@ -331,16 +335,17 @@ export const deleteEnquiry = async (enquiryId: string): Promise<boolean> => {
   return true;
 };
 
+/** Local cache of the staff roster, populated from /api/v1/admin/staff. */
 export const getStoredStaff = (): AdminUser[] => {
   try {
     const raw = localStorage.getItem(STAFF_STORAGE_KEY);
     if (!raw) {
-      localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(INITIAL_STAFF));
-      return INITIAL_STAFF;
+      localStorage.setItem(STAFF_STORAGE_KEY, '[]');
+      return [];
     }
     return JSON.parse(raw);
   } catch (e) {
-    return INITIAL_STAFF;
+    return [];
   }
 };
 

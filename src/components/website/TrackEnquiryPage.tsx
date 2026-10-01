@@ -12,7 +12,7 @@ import {
   MessageCircle,
 } from 'lucide-react';
 import { HomeLoanEnquiry, EnquiryStatus } from '../../types';
-import { getStoredEnquiries, trackEnquiry, formatINR } from '../../services/storageService';
+import { trackEnquiry, formatINR } from '../../services/storageService';
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
 
 interface TrackEnquiryPageProps {
@@ -20,19 +20,9 @@ interface TrackEnquiryPageProps {
 }
 
 export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }) => {
-  const [searchTerm, setSearchTerm] = useState('BLR15-0012');
-  const [searchedEnquiry, setSearchedEnquiry] = useState<HomeLoanEnquiry | null>(() => {
-    const list = getStoredEnquiries();
-    return list.find(e => e.id === 'BLR15-0012') || null;
-  });
-  const [hasSearched, setHasSearched] = useState(true);
-
-  // Keep the demo record in sync with the live API on mount (public track endpoint).
-  useEffect(() => {
-    trackEnquiry('BLR15-0012').then(found => {
-      if (found) setSearchedEnquiry(found);
-    });
-  }, []);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchedEnquiry, setSearchedEnquiry] = useState<HomeLoanEnquiry | null>(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -144,7 +134,7 @@ export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }
             Track Your Home Loan Enquiry
           </h1>
           <p className="text-slate-600 text-sm max-w-md mx-auto">
-            Enter your Enquiry Reference ID (e.g. BLR15-0012) or registered 10-digit mobile number.
+            Enter your Enquiry Reference ID (e.g. BLR15-0001) or registered 10-digit mobile number.
           </p>
         </div>
 
@@ -157,7 +147,7 @@ export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }
                 type="text"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
-                placeholder="Enter Enquiry ID (BLR15-0012) or Mobile Number"
+                placeholder="Enter Enquiry ID (BLR15-0001) or Mobile Number"
                 className="w-full pl-12 pr-4 py-3 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm font-medium"
               />
             </div>
@@ -169,31 +159,12 @@ export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }
             </button>
           </form>
 
-          <div className="flex items-center gap-2 mt-3 text-xs text-slate-400">
-            <span>Try sample Enquiry IDs:</span>
-            <button
-              type="button"
-              onClick={() => setSearchTerm('BLR15-0012')}
-              className="text-amber-700 underline font-mono hover:text-amber-900"
-            >
-              BLR15-0012
-            </button>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => setSearchTerm('BLR15-0010')}
-              className="text-amber-700 underline font-mono hover:text-amber-900"
-            >
-              BLR15-0010
-            </button>
-            <span>•</span>
-            <button
-              type="button"
-              onClick={() => setSearchTerm('BLR15-0007')}
-              className="text-amber-700 underline font-mono hover:text-amber-900"
-            >
-              BLR15-0007
-            </button>
+          <div className="flex items-start gap-2 mt-3 text-xs text-slate-400">
+            <span>
+              Your reference ID is issued when you submit an enquiry and starts with{' '}
+              <span className="font-mono text-slate-600">BLR15-</span>. You can also search using the
+              10-digit mobile number you registered with.
+            </span>
           </div>
         </div>
 
@@ -350,7 +321,7 @@ export const TrackEnquiryPage: React.FC<TrackEnquiryPageProps> = ({ onNavigate }
                 No Enquiry Found
               </h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                We couldn't find an enquiry matching "{searchTerm}". Please verify your Enquiry ID (e.g. BLR15-0012) or try searching with your mobile number.
+                We couldn't find an enquiry matching "{searchTerm}". Please verify your Enquiry ID (e.g. BLR15-0001) or try searching with your mobile number.
               </p>
               <div className="pt-2">
                 <button

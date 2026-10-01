@@ -27,7 +27,6 @@ import {
   calculateHomeLoanEmi,
   createEnquiry,
   formatINR,
-  getStoredEnquiries,
   trackEnquiry,
 } from '../../services/storageService';
 import { EmploymentType, PropertyType, HomeLoanEnquiry } from '../../types';
@@ -74,11 +73,8 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
   const [enqSubmitted, setEnqSubmitted] = useState<HomeLoanEnquiry | null>(null);
 
   // Status tracker lookup state in Profile tab
-  const [searchId, setSearchId] = useState('BLR15-0012');
-  const [trackedEnquiry, setTrackedEnquiry] = useState<HomeLoanEnquiry | null>(() => {
-    const list = getStoredEnquiries();
-    return list.find(e => e.id === 'BLR15-0012') || null;
-  });
+  const [searchId, setSearchId] = useState('');
+  const [trackedEnquiry, setTrackedEnquiry] = useState<HomeLoanEnquiry | null>(null);
 
   const handleTrackSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -192,7 +188,7 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
             <button
               onClick={() => {
                 setActiveTab('profile');
-                setSearchId('BLR15-0012');
+                setSearchId('');
               }}
               className="p-1.5 rounded-lg bg-white/10 text-amber-400 hover:bg-white/20"
               title="Track Status"
@@ -289,7 +285,7 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
                 <button
                   onClick={() => {
                     setActiveTab('profile');
-                    setSearchId('BLR15-0012');
+                    setSearchId('');
                   }}
                   className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-xs flex flex-col items-start gap-1.5 hover:border-amber-400 transition-colors text-left"
                 >
@@ -959,7 +955,7 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
               <form onSubmit={handleTrackSearch} className="flex gap-2">
                 <input
                   type="text"
-                  placeholder="Enquiry ID (e.g. BLR15-0012)"
+                  placeholder="Enquiry ID (e.g. BLR15-0001)"
                   value={searchId}
                   onChange={e => setSearchId(e.target.value)}
                   className="flex-1 px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white uppercase font-mono"
@@ -1040,7 +1036,7 @@ export const MobileAppView: React.FC<MobileAppViewProps> = ({ onSwitchView }) =>
                 </div>
               ) : (
                 <div className="p-4 bg-white rounded-2xl border border-slate-200 text-center text-xs text-slate-500">
-                  No enquiry found for "{searchId}". Try sample ID <button onClick={() => setSearchId('BLR15-0012')} className="underline font-mono text-amber-700">BLR15-0012</button>
+                  No enquiry found for "{searchId}". Double-check the ID, or search using the 10-digit mobile number you registered with.
                 </div>
               )}
             </div>

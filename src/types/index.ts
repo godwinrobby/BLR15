@@ -71,7 +71,7 @@ export interface StatusHistoryEntry {
 }
 
 export interface HomeLoanEnquiry {
-  id: string; // e.g. "BLR15-0012"
+  id: string; // e.g. "BLR15-0001"
   customerName: string;
   mobile: string;
   email: string;

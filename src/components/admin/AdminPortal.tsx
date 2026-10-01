@@ -57,7 +57,7 @@ import {
   refreshEnquiries,
   refreshStaff,
 } from '../../services/storageService';
-import { BLR15_OFFICE_DETAILS, INITIAL_STAFF } from '../../data/initialData';
+import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
 import * as authService from '../../services/authService';
 
 interface AdminPortalProps {
@@ -67,11 +67,11 @@ interface AdminPortalProps {
 export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
   // Authentication state — JWT-backed (see services/authService.ts).
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => authService.isAuthenticated());
-  const [currentAdmin, setCurrentAdmin] = useState<AdminUser>(
-    () => authService.getCurrentUser() ?? INITIAL_STAFF[0]
+  const [currentAdmin, setCurrentAdmin] = useState<AdminUser | null>(
+    () => authService.getCurrentUser()
   );
-  const [loginEmail, setLoginEmail] = useState('rajesh.k@blr15.in');
-  const [loginPassword, setLoginPassword] = useState('password123');
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -88,18 +88,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
       setLoginError(err?.message || 'Unable to sign in. Check your email and password.');
     } finally {
       setIsLoggingIn(false);
-    }
-  };
-
-  /** Demo convenience: signs in as a seeded staff member (password123). */
-  const handleQuickLogin = async (member: AdminUser) => {
-    setLoginError(null);
-    try {
-      const user = await authService.login(member.email, 'password123');
-      setCurrentAdmin(user);
-      setIsAuthenticated(true);
-    } catch (err: any) {
-      setLoginError(err?.message || 'Demo sign-in failed — is the API running?');
     }
   };
 
@@ -164,7 +152,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
 
   // Drop back to the login screen whenever the JWT expires / is rejected.
   useEffect(() => {
-    const onExpired = () => setIsAuthenticated(false);
+    const onExpired = () => {
+      setCurrentAdmin(null);
+      setIsAuthenticated(false);
+    };
     window.addEventListener(authService.AUTH_EXPIRED_EVENT, onExpired);
     return () => window.removeEventListener(authService.AUTH_EXPIRED_EVENT, onExpired);
   }, []);
@@ -260,7 +251,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     const updated = await updateEnquiryStatus(
       selectedEnquiry.id,
       newStatus,
-      currentAdmin.name,
+      currentAdmin?.name ?? 'Admin',
       note || `Status updated to ${newStatus}`
     );
     if (updated) {
@@ -275,7 +266,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     const updated = await updateEnquiryDetails(
       selectedEnquiry.id,
       { assignedStaff: staffName },
-      currentAdmin.name
+      currentAdmin?.name ?? 'Admin'
     );
     if (updated) {
       setSelectedEnquiry(updated);
@@ -289,7 +280,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     const updated = await updateEnquiryDetails(
       selectedEnquiry.id,
       { internalRemarks: remarks },
-      currentAdmin.name
+      currentAdmin?.name ?? 'Admin'
     );
     if (updated) {
       setSelectedEnquiry(updated);
@@ -307,7 +298,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
       newFollowUpDate,
       newFollowUpTime,
       newFollowUpNotes,
-      currentAdmin.name
+      currentAdmin?.name ?? 'Admin'
     );
 
     // Update status to 'Follow-up' if it was 'New'
@@ -315,7 +306,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
       await updateEnquiryStatus(
         selectedEnquiry.id,
         'Follow-up',
-        currentAdmin.name,
+        currentAdmin?.name ?? 'Admin',
         `Follow-up scheduled for ${newFollowUpDate}`
       );
     }
@@ -342,8 +333,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     }
   };
 
-  // If not logged in, render Admin Login screen (Prompt section 13)
-  if (!isAuthenticated) {
+  // If not logged in, render Admin Login screen (Prompt section 13).
+  // currentAdmin is null on a cold start, after logout, or when the JWT
+  // expires, so guard on both rather than assuming a user is present.
+  if (!isAuthenticated || !currentAdmin) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-3xl p-8 border border-slate-200 shadow-2xl space-y-6">
@@ -405,36 +398,6 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
               {isLoggingIn ? 'Signing In…' : 'Sign In to Admin Panel'}
             </button>
           </form>
-
-          {/* Quick Demo Login Switcher */}
-          <div className="pt-4 border-t border-slate-100 space-y-2">
-            <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block text-center">
-              Quick Role Switch (Demo)
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin(staffList[0] || INITIAL_STAFF[0])}
-                className="p-2 rounded-lg bg-amber-50 hover:bg-amber-100 text-[#0B1B3D] text-[11px] font-bold border border-amber-200"
-              >
-                Super Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin(staffList[1] || INITIAL_STAFF[1])}
-                className="p-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-900 text-[11px] font-bold border border-blue-200"
-              >
-                Admin
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickLogin(staffList[2] || INITIAL_STAFF[2])}
-                className="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold border border-slate-300"
-              >
-                Loan Exec
-              </button>
-            </div>
-          </div>
 
           <div className="text-center pt-2">
             <button
