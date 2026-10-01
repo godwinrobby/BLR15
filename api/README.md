@@ -68,12 +68,23 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=godwinrobby1985@gmail.com
 SMTP_PASS=            # blank => emails run in simulated mode
-SMTP_FROM="BLR15 Home Loans" <godwinrobby1985@gmail.com>
+SMTP_FROM="\"BLR15 Home Loans\" <godwinrobby1985@gmail.com>
 SMTP_ADMIN_EMAIL=godwinrobby1985@gmail.com
 ```
 
 > Emails are **simulated** (no delivery) until `SMTP_USER` + `SMTP_PASS` are set,
 > matching the previous PHP/Node behaviour.
+>
+> **Gmail requires an App Password** (16 characters, generated in
+> Google Account → Security → 2-Step Verification → App passwords), not the
+> account password. Anything else fails with a 535 authentication error.
+>
+> `POST /api/v1/enquiries` dispatches the customer acknowledgement and the admin
+> lead alert automatically, so every client (website form, eligibility wizard,
+> mobile app) is emailed without an extra call. A send failure is logged and
+> the enquiry still returns `201` — losing a lead is worse than losing an email.
+> Configure or test credentials at runtime from **Admin → SMTP**
+> (`GET|PUT /api/v1/settings/smtp`, `POST /api/v1/settings/smtp/test`).
 
 ## Seeded logins
 

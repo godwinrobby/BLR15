@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Mail\AdminLeadAlertMail;
 use App\Mail\EnquiryConfirmationMail;
 use App\Mail\SmtpTestMail;
+use App\Models\Enquiry;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -91,6 +92,73 @@ class MailService
         return [
             'messageId' => $this->simulatedMessageId(),
             'isSimulated' => false,
+        ];
+    }
+
+    /**
+     * Send the customer acknowledgement + admin lead alert for a stored enquiry.
+     *
+     * Called from EnquiryController::store so every submission is emailed
+     * server-side, whichever client created it.
+     *
+     * @return array<string, mixed>
+     */
+    public function dispatchForEnquiry(Enquiry $enquiry): array
+    {
+        $config = $this->settings->smtpConfig();
+        $customerEmail = trim((string) $enquiry->email);
+        $adminEmail = (string) $config['adminEmail'];
+
+        $result = [
+            'isSimulated' => true,
+            'customerEmailSent' => false,
+            'adminEmailSent' => false,
+            'customerEmail' => $customerEmail,
+            'adminEmail' => $adminEmail,
+        ];
+
+        // Nothing to do in simulated mode, and we must not fail the request when
+        // SMTP is unconfigured or the customer gave no email address.
+        if ($config['user'] === '' || $config['pass'] === '') {
+            $result['customerEmailSent'] = true;
+            $result['adminEmailSent'] = true;
+
+            return $result;
+        }
+
+        $this->applyMailConfig($config);
+
+        if ($customerEmail !== '') {
+            Mail::to($customerEmail)->send(new EnquiryConfirmationMail($this->payload($enquiry)));
+            $result['customerEmailSent'] = true;
+        }
+
+        if ($adminEmail !== '') {
+            Mail::to($adminEmail)->send(new AdminLeadAlertMail($this->payload($enquiry)));
+            $result['adminEmailSent'] = true;
+        }
+
+        $result['isSimulated'] = false;
+
+        return $result;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function payload(Enquiry $enquiry): array
+    {
+        return [
+            'id' => $enquiry->id,
+            'customerName' => $enquiry->customer_name,
+            // The templates expect `phone`; the column is `mobile`.
+            'phone' => $enquiry->mobile,
+            'mobile' => $enquiry->mobile,
+            'email' => $enquiry->email,
+            'loanType' => $enquiry->loan_type,
+            'requiredLoanAmount' => $enquiry->required_loan_amount,
+            'propertyValue' => $enquiry->property_value,
+            'createdVia' => $enquiry->source,
         ];
     }
 
