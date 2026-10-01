@@ -493,6 +493,13 @@ export const exportEnquiriesToCSV = (enquiries: HomeLoanEnquiry[]): void => {
     'Assigned Staff',
     'Next Follow-Up',
     'Created Date',
+    'Lead Source',
+    'Assessed Eligibility',
+    'Estimated EMI',
+    'Loan-to-Value %',
+    'Other Obligations',
+    'Existing Bank',
+    'Assessment Note',
   ];
 
   const rows = enquiries.map(e => [
@@ -511,6 +518,15 @@ export const exportEnquiriesToCSV = (enquiries: HomeLoanEnquiry[]): void => {
     `"${e.assignedStaff || 'Unassigned'}"`,
     `"${e.nextFollowUpDate || ''} ${e.nextFollowUpTime || ''}"`,
     `"${new Date(e.createdAt).toLocaleDateString()}"`,
+    `"${(e.source || '').replace(/"/g, '""')}"`,
+    e.estimatedEligibilityAmount ?? '',
+    e.estimatedEmi ?? '',
+    e.propertyValue
+      ? Math.round((e.requiredLoanAmount / e.propertyValue) * 100)
+      : '',
+    e.otherObligations ?? '',
+    `"${(e.existingLoan?.bankName || '').replace(/"/g, '""')}"`,
+    `"${(e.message || '').replace(/"/g, '""')}"`,
   ]);
 
   const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');

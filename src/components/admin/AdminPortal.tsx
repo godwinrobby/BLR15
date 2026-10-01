@@ -32,6 +32,7 @@ import {
   Menu,
   Globe,
   ChevronLeft,
+  ClipboardCheck,
   Database,
   Cloud,
 } from 'lucide-react';
@@ -135,6 +136,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
   const [filterLocation, setFilterLocation] = useState<string>('All');
   const [filterEmployment, setFilterEmployment] = useState<string>('All');
   const [filterStaff, setFilterStaff] = useState<string>('All');
+  const [filterSource, setFilterSource] = useState<string>('All');
 
   // Follow up form modal in details
   const [newFollowUpDate, setNewFollowUpDate] = useState(
@@ -231,10 +233,17 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
         (item.propertyLocation && item.propertyLocation.toLowerCase().includes(filterLocation.toLowerCase()));
       const matchEmp = filterEmployment === 'All' || item.employmentType === filterEmployment;
       const matchStaff = filterStaff === 'All' || item.assignedStaff === filterStaff;
+      const matchSource = filterSource === 'All' || item.source === filterSource;
 
-      return matchSearch && matchStatus && matchLoc && matchEmp && matchStaff;
+      return matchSearch && matchStatus && matchLoc && matchEmp && matchStaff && matchSource;
     });
-  }, [enquiries, searchTerm, filterStatus, filterLocation, filterEmployment, filterStaff]);
+  }, [enquiries, searchTerm, filterStatus, filterLocation, filterEmployment, filterStaff, filterSource]);
+
+  /** Distinct lead sources present in the loaded enquiries, for the filter dropdown. */
+  const sourceOptions = useMemo(
+    () => Array.from(new Set(enquiries.map(e => e.source).filter(Boolean))).sort(),
+    [enquiries]
+  );
 
   // Dashboard metrics — computed purely from the enquiries loaded from the API.
   // Previously these were floored by a hardcoded demo baseline (125 total, 28
@@ -1111,6 +1120,20 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
                     ))}
                   </select>
                 </div>
+
+                {/* Lead Source Filter — lets staff isolate Eligibility Wizard leads */}
+                <div>
+                  <select
+                    value={filterSource}
+                    onChange={e => setFilterSource(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-300 text-xs bg-white"
+                  >
+                    <option value="All">All Sources</option>
+                    {sourceOptions.map(src => (
+                      <option key={src} value={src}>{src}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
             </div>
 
@@ -1673,6 +1696,57 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
                       <p className="text-slate-400 italic">No previous active home loan indicated.</p>
                     )}
                   </div>
+                </div>
+
+                {/* 5. Eligibility Assessment — populated by the Eligibility Wizard.
+                    Always rendered so staff can tell "not assessed" apart from
+                    "assessed at zero". */}
+                <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200 space-y-2 md:col-span-2">
+                  <h4 className="font-bold text-xs text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <ClipboardCheck className="w-3.5 h-3.5" />
+                    5. Eligibility Assessment
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Assessed Eligibility:</span>
+                      <span className="font-black text-amber-700">
+                        {selectedEnquiry.estimatedEligibilityAmount
+                          ? formatINR(selectedEnquiry.estimatedEligibilityAmount)
+                          : 'Not assessed'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Estimated EMI:</span>
+                      <span className="font-black text-amber-700">
+                        {selectedEnquiry.estimatedEmi
+                          ? `${formatINR(selectedEnquiry.estimatedEmi)} / mo`
+                          : 'Not assessed'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Other Obligations:</span>
+                      <span className="font-bold text-slate-800">
+                        {formatINR(selectedEnquiry.otherObligations || 0)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-600">Loan-to-Value:</span>
+                      <span className="font-bold text-slate-800">
+                        {selectedEnquiry.propertyValue
+                          ? `${Math.round(
+                              (selectedEnquiry.requiredLoanAmount / selectedEnquiry.propertyValue) * 100
+                            )}%`
+                          : '—'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {selectedEnquiry.message && (
+                    <div className="mt-2 pt-2 border-t border-amber-200 text-xs text-slate-700 leading-relaxed">
+                      <span className="font-bold text-amber-800">Assessment note:</span>{' '}
+                      {selectedEnquiry.message}
+                    </div>
+                  )}
                 </div>
 
               </div>

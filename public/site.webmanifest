@@ -1,0 +1,25 @@
+{
+  "name": "BLR15 Home Loans",
+  "short_name": "BLR15",
+  "description": "Home loan advisory, EMI calculators and instant eligibility checks in Bangalore.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0B1B3D",
+  "theme_color": "#0B1B3D",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
