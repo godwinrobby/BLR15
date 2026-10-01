@@ -12,8 +12,16 @@ use Illuminate\Database\Seeder;
  */
 class AdminUserSeeder extends Seeder
 {
+    /** Password for every seeded account; overridable per environment. */
+    private function password(): string
+    {
+        return env('SEED_PASSWORD', 'password123');
+    }
+
     public function run(): void
     {
+        $password = $this->password();
+
         $staff = [
             [
                 'id' => 'staff-1',
@@ -44,7 +52,7 @@ class AdminUserSeeder extends Seeder
         foreach ($staff as $member) {
             AdminUser::query()->updateOrCreate(
                 ['id' => $member['id']],
-                $member + ['password' => 'password123'],
+                $member + ['password' => $password],
             );
         }
     }
