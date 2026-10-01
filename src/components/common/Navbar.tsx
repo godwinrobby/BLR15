@@ -111,7 +111,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   ? 'bg-amber-400 text-slate-950 font-bold'
                   : 'bg-slate-800 text-amber-300 hover:bg-slate-700 font-medium'
               }`}
-              title="Switch to Admin Portal & Supabase Sync"
+              title="Switch to Admin Portal"
             >
               <ShieldCheck className="w-3.5 h-3.5 text-amber-400" />
               <span>Admin</span>

@@ -36,7 +36,7 @@ import {
   Cloud,
 } from 'lucide-react';
 import { BLR15Logo } from '../common/BLR15Logo';
-import { SupabaseManager } from './SupabaseManager';
+import { ApiManager } from './ApiManager';
 import { SmtpManager } from './SmtpManager';
 import {
   HomeLoanEnquiry,
@@ -510,7 +510,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
               { id: 'enquiries', label: 'All Enquiries', icon: Users, badge: enquiries.length, alertBadge: newEnquiriesCount > 0 ? `${newEnquiriesCount} new` : null },
               { id: 'followups', label: 'Follow-ups', icon: Clock, badge: followUpsCount > 0 ? followUpsCount : null, alertBadge: null },
               { id: 'reports', label: 'Reports & Export', icon: FileSpreadsheet, badge: null, alertBadge: null },
-              { id: 'database', label: 'Supabase Cloud DB', icon: Database, badge: null, alertBadge: 'Live' },
+              { id: 'database', label: 'API Server', icon: Database, badge: null, alertBadge: 'Live' },
               { id: 'smtp', label: 'SMTP Email Delivery', icon: Mail, badge: null, alertBadge: 'Email' },
               { id: 'settings', label: 'Branch Settings', icon: SettingsIcon, badge: null, alertBadge: null },
             ].map(item => {
@@ -673,7 +673,7 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
                   {activeSection === 'enquiries' && 'Home Loan Enquiries Management'}
                   {activeSection === 'followups' && 'Follow-up Scheduler & Pipeline'}
                   {activeSection === 'reports' && 'Reports & CSV Analytics Export'}
-                  {activeSection === 'database' && 'Supabase Cloud Database & Data Migration'}
+                  {activeSection === 'database' && 'API Server & Data Sync'}
                   {activeSection === 'smtp' && 'SMTP Automated Email Delivery & Lead Alerts'}
                   {activeSection === 'settings' && 'Branch & Company Settings'}
                 </h1>
@@ -688,10 +688,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
               <button
                 onClick={() => setActiveSection('database')}
                 className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs text-emerald-800 font-semibold cursor-pointer transition-colors"
-                title="Supabase Cloud Database"
+                title="Laravel API Server"
               >
                 <Cloud className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Supabase Live</span>
+                <span>API Live</span>
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
               </button>
 
@@ -1349,10 +1349,10 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
         )}
 
         {/* ==================================================== */}
-        {/* SUPABASE CLOUD DATABASE & MIGRATION TAB */}
+        {/* API SERVER & DATA SYNC TAB */}
         {/* ==================================================== */}
         {activeSection === 'database' && (
-          <SupabaseManager />
+          <ApiManager />
         )}
 
         {/* ==================================================== */}

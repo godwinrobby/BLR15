@@ -13,7 +13,7 @@ import { MobileAppView } from './components/mobile/MobileAppView';
 import { AdminPortal } from './components/admin/AdminPortal';
 import { HomeLoanEnquiry } from './types';
 import { updateDocumentSEO, getEligibilityPageTitle, getEnquiryPageTitle } from './utils/seo';
-import { initSupabaseSync } from './services/storageService';
+import { initApiSync } from './services/storageService';
 
 // Route parser helper
 function getRouteFromLocation(): { viewMode: 'website' | 'mobile-app' | 'admin'; tab: string; queryParams: Record<string, string> } {
@@ -148,8 +148,8 @@ export function App() {
     window.addEventListener('popstate', handleUrlChange);
     window.addEventListener('hashchange', handleUrlChange);
     
-    // Initialize Supabase Cloud Sync
-    initSupabaseSync().catch(err => console.warn('Supabase sync init failed:', err));
+    // Warm the local cache from the Laravel API
+    initApiSync().catch(err => console.warn('API sync init failed:', err));
 
     return () => {
       window.removeEventListener('popstate', handleUrlChange);

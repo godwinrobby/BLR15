@@ -1,16 +1,5 @@
 import { HomeLoanEnquiry, EnquiryStatus, FollowUpEntry, StatusHistoryEntry, AdminUser } from '../types';
 import { INITIAL_ENQUIRIES, INITIAL_STAFF } from '../data/initialData';
-import {
-  supabase,
-  fetchEnquiriesFromSupabase,
-  upsertEnquiryToSupabase,
-  deleteEnquiryFromSupabase,
-  fetchStaffFromSupabase,
-  upsertStaffToSupabase,
-  checkSupabaseHealth,
-  migrateAllDataToSupabase,
-  mapSupabaseToEnquiry,
-} from './supabaseClient';
 import { sendEnquiryEmailViaSmtp } from './emailService';
 import { apiJson, ApiError } from './apiClient';
 import type { ApiListResponse, ApiItemResponse } from './apiClient';
@@ -18,8 +7,6 @@ import type { ApiListResponse, ApiItemResponse } from './apiClient';
 const ENQUIRIES_STORAGE_KEY = 'blr15_enquiries_v1';
 const STAFF_STORAGE_KEY = 'blr15_staff_v1';
 const SETTINGS_STORAGE_KEY = 'blr15_settings_v1';
-
-let isSyncInitialized = false;
 
 export const getStoredEnquiries = (): HomeLoanEnquiry[] => {
   try {
@@ -35,17 +22,10 @@ export const getStoredEnquiries = (): HomeLoanEnquiry[] => {
   }
 };
 
-export const saveEnquiries = (enquiries: HomeLoanEnquiry[], syncToCloud: boolean = false): void => {
+export const saveEnquiries = (enquiries: HomeLoanEnquiry[]): void => {
   try {
     localStorage.setItem(ENQUIRIES_STORAGE_KEY, JSON.stringify(enquiries));
     window.dispatchEvent(new CustomEvent('blr15-enquiries-updated'));
-
-    // Optional background cloud push
-    if (syncToCloud) {
-      enquiries.forEach(item => {
-        upsertEnquiryToSupabase(item).catch(() => {});
-      });
-    }
   } catch (e) {
     console.error('Failed to save enquiries', e);
   }
@@ -227,11 +207,6 @@ export const createEnquiry = async (
 
   cacheEnquiry(newEnquiry);
 
-  // Push to Supabase asynchronously
-  upsertEnquiryToSupabase(newEnquiry).catch(err => {
-    console.warn('Asynchronous Supabase push deferred:', err);
-  });
-
   // Send proper SMTP confirmation email to customer & alert to admin
   dispatchEnquiryEmails(newEnquiry);
 
@@ -268,11 +243,6 @@ export const updateEnquiryStatus = async (
   list[index] = updatedItem;
   saveEnquiries(list);
 
-  // Sync update to Supabase
-  upsertEnquiryToSupabase(updatedItem).catch(err => {
-    console.warn('Supabase update failed:', err);
-  });
-
   // Persist through the dedicated status endpoint (server appends history).
   const persisted = await persistStatus(enquiryId, newStatus, note);
   return persisted ?? updatedItem;
@@ -298,11 +268,6 @@ export const updateEnquiryDetails = async (
 
   list[index] = updatedItem;
   saveEnquiries(list);
-
-  // Sync update to Supabase
-  upsertEnquiryToSupabase(updatedItem).catch(err => {
-    console.warn('Supabase update failed:', err);
-  });
 
   // Persist through the live API so every admin session sees the change
   return persistEnquiry(updatedItem);
@@ -338,11 +303,6 @@ export const addFollowUpToEnquiry = async (
   list[index] = item;
   saveEnquiries(list);
 
-  // Sync update to Supabase
-  upsertEnquiryToSupabase(item).catch(err => {
-    console.warn('Supabase update failed:', err);
-  });
-
   // Persist through the dedicated follow-up endpoint.
   try {
     const body = await apiJson<ApiItemResponse<FollowUpEntry>>(
@@ -362,9 +322,6 @@ export const deleteEnquiry = async (enquiryId: string): Promise<boolean> => {
   if (filtered.length === list.length) return false;
 
   saveEnquiries(filtered);
-  deleteEnquiryFromSupabase(enquiryId).catch(err => {
-    console.warn('Supabase delete failed:', err);
-  });
 
   try {
     await apiJson(`admin/enquiries/${encodeURIComponent(enquiryId)}`, { method: 'DELETE' });
@@ -390,9 +347,6 @@ export const getStoredStaff = (): AdminUser[] => {
 export const saveStaff = async (staff: AdminUser[]): Promise<void> => {
   try {
     localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(staff));
-    staff.forEach(s => {
-      upsertStaffToSupabase(s).catch(() => {});
-    });
   } catch (e) {
     console.error('Failed to save staff', e);
   }
@@ -408,104 +362,38 @@ export const saveStaff = async (staff: AdminUser[]): Promise<void> => {
 };
 
 /**
- * Initializes Supabase cloud sync & realtime listener
+ * Boot-time warm-up of the Laravel API cache.
+ *
+ * Replaces the former Supabase realtime subscription: enquiries and staff are
+ * pulled from /api/v1 and merged into the local cache. The server is the
+ * source of truth, so a successful fetch replaces the cache outright; on
+ * failure the local cache is left intact so the SPA still renders offline.
  */
-export const initSupabaseSync = async (): Promise<{ connected: boolean; count: number }> => {
-  if (isSyncInitialized) {
-    const list = getStoredEnquiries();
-    return { connected: true, count: list.length };
-  }
-  isSyncInitialized = true;
-
+export const initApiSync = async (): Promise<{ connected: boolean; count: number }> => {
   try {
-    // 1. Initial fetch from Supabase
-    const cloudEnquiries = await fetchEnquiriesFromSupabase();
-    if (cloudEnquiries && cloudEnquiries.length > 0) {
-      const localList = getStoredEnquiries();
-      
-      // Merge strategy: index by ID, cloud takes priority unless local is newer
-      const map = new Map<string, HomeLoanEnquiry>();
-      localList.forEach(item => map.set(item.id, item));
-      cloudEnquiries.forEach(item => map.set(item.id, item));
-
-      const merged = Array.from(map.values()).sort(
-        (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-
-      saveEnquiries(merged);
-      console.log(`[Supabase] Synced ${cloudEnquiries.length} enquiries from cloud database.`);
-    }
-
-    // 2. Initial fetch for staff
-    const cloudStaff = await fetchStaffFromSupabase();
-    if (cloudStaff && cloudStaff.length > 0) {
-      localStorage.setItem(STAFF_STORAGE_KEY, JSON.stringify(cloudStaff));
-    }
-
-    // 3. Realtime subscription to public:enquiries
-    try {
-      supabase
-        .channel('public-enquiries-realtime')
-        .on(
-          'postgres_changes',
-          { event: '*', schema: 'public', table: 'enquiries' },
-          payload => {
-            console.log('[Supabase Realtime Event]', payload.eventType);
-            if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-              const updatedItem = mapSupabaseToEnquiry(payload.new);
-              const list = getStoredEnquiries();
-              const existingIdx = list.findIndex(e => e.id === updatedItem.id);
-              let newList: HomeLoanEnquiry[];
-              if (existingIdx >= 0) {
-                newList = [...list];
-                newList[existingIdx] = updatedItem;
-              } else {
-                newList = [updatedItem, ...list];
-              }
-              saveEnquiries(newList);
-            } else if (payload.eventType === 'DELETE') {
-              const deletedId = (payload.old as any)?.id;
-              if (deletedId) {
-                const list = getStoredEnquiries();
-                const filtered = list.filter(e => e.id !== deletedId);
-                saveEnquiries(filtered);
-              }
-            }
-          }
-        )
-        .subscribe();
-    } catch (realtimeErr) {
-      console.warn('Realtime subscription skipped or not supported:', realtimeErr);
-    }
-
-    return {
-      connected: true,
-      count: getStoredEnquiries().length,
-    };
+    const list = await refreshEnquiries();
+    await refreshStaff();
+    console.log(`[API] Synced ${list.length} enquiries from the Laravel API.`);
+    return { connected: true, count: list.length };
   } catch (err) {
-    console.warn('[Supabase] Sync init error:', err);
-    return {
-      connected: false,
-      count: getStoredEnquiries().length,
-    };
+    console.warn('[API] Sync init error:', err);
+    return { connected: false, count: getStoredEnquiries().length };
   }
 };
 
-export const syncNowWithSupabase = async () => {
-  const cloudEnquiries = await fetchEnquiriesFromSupabase();
-  if (cloudEnquiries && cloudEnquiries.length > 0) {
-    const localList = getStoredEnquiries();
-    const map = new Map<string, HomeLoanEnquiry>();
-    localList.forEach(item => map.set(item.id, item));
-    cloudEnquiries.forEach(item => map.set(item.id, item));
-
-    const merged = Array.from(map.values()).sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-    saveEnquiries(merged);
-    return { success: true, count: merged.length };
+/**
+ * Force-refreshes enquiries + staff from the API on demand.
+ * Returns success=false when the API is unreachable (local cache retained).
+ */
+export const syncNowWithApi = async (): Promise<{ success: boolean; count: number }> => {
+  try {
+    const list = await refreshEnquiries();
+    await refreshStaff();
+    return { success: true, count: list.length };
+  } catch (e) {
+    console.warn('Manual API sync failed:', e);
+    return { success: false, count: getStoredEnquiries().length };
   }
-  return { success: false, count: getStoredEnquiries().length };
 };
 
 export const formatINR = (amount: number | undefined): string => {
