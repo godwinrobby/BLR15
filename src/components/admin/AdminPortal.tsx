@@ -57,6 +57,15 @@ import {
   refreshEnquiries,
   refreshStaff,
 } from '../../services/storageService';
+import { apiJson } from '../../services/apiClient';
+import type { ApiListResponse } from '../../services/apiClient';
+
+/** Row shape returned by GET /admin/reports/{locations,sources}. */
+interface ReportRow {
+  label: string;
+  count: number;
+  totalValue: number;
+}
 import { BLR15_OFFICE_DETAILS } from '../../data/initialData';
 import * as authService from '../../services/authService';
 
@@ -144,6 +153,29 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     heroTagline: 'Your Dream Home, Our Commitment',
   });
 
+  // Live report breakdowns from GET /admin/reports/* — replaces the hardcoded
+  // demo figures ("Kammagondanahalli: 34 leads", "Under ₹30 Lakhs: 18%", …)
+  // that previously never reflected the database.
+  const [reports, setReports] = useState<{
+    locations: ReportRow[];
+    sources: ReportRow[];
+  }>({ locations: [], sources: [] });
+
+  const loadReports = async () => {
+    try {
+      const [locations, sources] = await Promise.all([
+        apiJson<ApiListResponse<ReportRow>>('admin/reports/locations'),
+        apiJson<ApiListResponse<ReportRow>>('admin/reports/sources'),
+      ]);
+      setReports({
+        locations: Array.isArray(locations.data) ? locations.data : [],
+        sources: Array.isArray(sources.data) ? sources.data : [],
+      });
+    } catch (e) {
+      console.warn('Reports unavailable:', e);
+    }
+  };
+
   const loadData = () => {
     const list = getStoredEnquiries();
     setEnquiries(list);
@@ -168,9 +200,11 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     // new website submissions, etc. show up without a manual page reload).
     refreshEnquiries();
     refreshStaff();
+    loadReports();
     const liveTimer = window.setInterval(() => {
       refreshEnquiries();
       refreshStaff();
+      loadReports();
     }, 30000);
     window.addEventListener('blr15-enquiries-updated', loadData);
     return () => {
@@ -202,33 +236,61 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
     });
   }, [enquiries, searchTerm, filterStatus, filterLocation, filterEmployment, filterStaff]);
 
-  // Dashboard Metrics (Base requested: Total 125, New 28, Contacted 42, Follow-up 31, Converted 15, Closed 9 + live additions)
+  // Dashboard metrics — computed purely from the enquiries loaded from the API.
+  // Previously these were floored by a hardcoded demo baseline (125 total, 28
+  // new, …) so the dashboard always looked populated; that reported numbers
+  // that did not exist in the database.
   const dashboardStats = useMemo(() => {
-    const baseOffset = {
-      total: 125,
-      new: 28,
-      contacted: 42,
-      followUp: 31,
-      converted: 15,
-      closed: 9,
-    };
-
-    // Calculate actual counts from current enquiries
-    const liveNew = enquiries.filter(e => e.status === 'New').length;
-    const liveContacted = enquiries.filter(e => e.status === 'Contacted').length;
-    const liveFollowUp = enquiries.filter(e => e.status === 'Follow-up').length;
-    const liveConverted = enquiries.filter(e => e.status === 'Converted').length;
-    const liveClosed = enquiries.filter(e => e.status === 'Closed').length;
+    const count = (status: EnquiryStatus) => enquiries.filter(e => e.status === status).length;
 
     return {
-      total: Math.max(baseOffset.total, enquiries.length),
-      new: Math.max(baseOffset.new, liveNew),
-      contacted: Math.max(baseOffset.contacted, liveContacted),
-      followUp: Math.max(baseOffset.followUp, liveFollowUp),
-      converted: Math.max(baseOffset.converted, liveConverted),
-      closed: Math.max(baseOffset.closed, liveClosed),
+      total: enquiries.length,
+      new: count('New'),
+      contacted: count('Contacted'),
+      followUp: count('Follow-up'),
+      converted: count('Converted'),
+      closed: count('Closed'),
     };
   }, [enquiries]);
+
+  // Loan-size brackets derived from the live enquiries, so the mix shown on the
+  // dashboard matches what is actually in the database.
+  const loanBrackets = useMemo(() => {
+    const LAKH = 100000;
+    const buckets = [
+      { label: 'Under ₹30L', min: 0, max: 30 * LAKH },
+      { label: '₹30L – ₹50L', min: 30 * LAKH, max: 50 * LAKH },
+      { label: '₹50L – ₹1Cr', min: 50 * LAKH, max: 100 * LAKH },
+      { label: 'Above ₹1Cr', min: 100 * LAKH, max: Infinity },
+    ];
+
+    return buckets.map(b => {
+      const count = enquiries.filter(
+        e => e.requiredLoanAmount >= b.min && e.requiredLoanAmount < b.max
+      ).length;
+
+      return {
+        label: b.label,
+        count,
+        percent: enquiries.length ? Math.round((count / enquiries.length) * 100) : 0,
+      };
+    });
+  }, [enquiries]);
+
+  // Leads currently assigned to each active staff member.
+  const staffPerformance = useMemo(
+    () =>
+      staffList
+        .map(member => ({
+          name: member.name,
+          leads: enquiries.filter(e => e.assignedStaff === member.name).length,
+        }))
+        .filter(row => row.leads > 0)
+        .sort((a, b) => b.leads - a.leads),
+    [staffList, enquiries]
+  );
+
+  const activeStaffCount = staffList.filter(s => s.active).length;
 
   // All status options from prompt
   const allStatuses: EnquiryStatus[] = [
@@ -688,14 +750,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
         {activeSection === 'dashboard' && (
           <div className="space-y-6 animate-in fade-in">
             
-            {/* Dashboard Cards from Prompt:
-                Total Enquiries: 125
-                New Enquiries: 28
-                Contacted: 42
-                Follow-up: 31
-                Converted: 15
-                Closed: 9
-            */}
+            {/* KPI tiles are driven by dashboardStats, computed from the
+                enquiries returned by the API — no fixed baseline. */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h2 className="text-xl font-bold font-['Outfit'] text-[#0B1B3D]">
@@ -1279,32 +1335,74 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ onSwitchView }) => {
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-slate-200">
-                <span className="text-xs font-bold text-slate-500 uppercase">Top Bangalore Hubs</span>
-                <div className="text-2xl font-black text-[#0B1B3D] mt-1">Jalahalli West</div>
+                <span className="text-xs font-bold text-slate-500 uppercase">Top Property Locations</span>
+                <div className="text-2xl font-black text-[#0B1B3D] mt-1">
+                  {reports.locations[0]?.label || '—'}
+                </div>
                 <div className="text-xs text-slate-600 mt-2 space-y-0.5">
-                  <p>• Kammagondanahalli: 34 leads</p>
-                  <p>• Yelahanka: 22 leads</p>
-                  <p>• Hebbal & Peenya: 28 leads</p>
+                  {reports.locations.length ? (
+                    reports.locations.slice(0, 3).map(row => (
+                      <p key={row.label}>
+                        • {row.label}: {row.count} lead{row.count === 1 ? '' : 's'}
+                      </p>
+                    ))
+                  ) : (
+                    <p>• No location data yet</p>
+                  )}
                 </div>
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-slate-200">
                 <span className="text-xs font-bold text-slate-500 uppercase">Loan Size Brackets</span>
-                <div className="text-2xl font-black text-[#0B1B3D] mt-1">₹50L – ₹1 Cr</div>
+                <div className="text-2xl font-black text-[#0B1B3D] mt-1">
+                  {formatINR(enquiries[0]?.requiredLoanAmount)}+
+                </div>
                 <div className="text-xs text-slate-600 mt-2 space-y-0.5">
-                  <p>• Under ₹30 Lakhs: 18%</p>
-                  <p>• ₹30L - ₹50 Lakhs: 32%</p>
-                  <p>• Above ₹1 Crore: 15%</p>
+                  {enquiries.length ? (
+                    loanBrackets.map(b => (
+                      <p key={b.label}>
+                        • {b.label}: {b.percent}% ({b.count})
+                      </p>
+                    ))
+                  ) : (
+                    <p>• No enquiries yet</p>
+                  )}
                 </div>
               </div>
 
               <div className="bg-white p-5 rounded-2xl border border-slate-200">
                 <span className="text-xs font-bold text-slate-500 uppercase">Staff Performance</span>
-                <div className="text-2xl font-black text-[#0B1B3D] mt-1">3 Active Execs</div>
+                <div className="text-2xl font-black text-[#0B1B3D] mt-1">
+                  {activeStaffCount} Active Exec{activeStaffCount === 1 ? '' : 's'}
+                </div>
                 <div className="text-xs text-slate-600 mt-2 space-y-0.5">
-                  <p>• Rajesh Kumar: 48 leads</p>
-                  <p>• Priya Sharma: 44 leads</p>
-                  <p>• Suresh Gowda: 33 leads</p>
+                  {staffPerformance.length ? (
+                    staffPerformance.map(row => (
+                      <p key={row.name}>
+                        • {row.name}: {row.leads} lead{row.leads === 1 ? '' : 's'}
+                      </p>
+                    ))
+                  ) : (
+                    <p>• No leads assigned yet</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-slate-200">
+                <span className="text-xs font-bold text-slate-500 uppercase">Lead Sources</span>
+                <div className="text-2xl font-black text-[#0B1B3D] mt-1">
+                  {reports.sources[0]?.label || '—'}
+                </div>
+                <div className="text-xs text-slate-600 mt-2 space-y-0.5">
+                  {reports.sources.length ? (
+                    reports.sources.slice(0, 3).map(row => (
+                      <p key={row.label}>
+                        • {row.label}: {row.count} lead{row.count === 1 ? '' : 's'}
+                      </p>
+                    ))
+                  ) : (
+                    <p>• No source data yet</p>
+                  )}
                 </div>
               </div>
             </div>
