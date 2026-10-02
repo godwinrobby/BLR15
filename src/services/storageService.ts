@@ -95,7 +95,13 @@ const cacheEnquiry = (record: HomeLoanEnquiry): void => {
   saveEnquiries([record, ...list]);
 };
 
-/** Fire-and-forget SMTP dispatch (parity with the original create flow). */
+/**
+ * Fire-and-forget SMTP dispatch, used ONLY on the offline fallback path.
+ *
+ * On the live path the API emails the customer and alerts the admin itself
+ * (EnquiryController::store → MailService::dispatchForEnquiry), so calling this
+ * as well sent every lead two confirmation emails.
+ */
 const dispatchEnquiryEmails = (enquiry: HomeLoanEnquiry): void => {
   sendEnquiryEmailViaSmtp(enquiry).catch(err => {
     console.warn('Asynchronous SMTP email dispatch deferred:', err);
@@ -181,7 +187,8 @@ export const createEnquiry = async (
     });
     const created = body.data;
     cacheEnquiry(created);
-    dispatchEnquiryEmails(created);
+    // No client-side email here: the API dispatches the customer confirmation
+    // and admin alert server-side as part of this POST.
     return created;
   } catch (err) {
     if (!shouldFallbackLocally(err)) throw err;
