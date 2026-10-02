@@ -5,7 +5,6 @@ import {
   Phone,
   Mail,
   Clock,
-  Shield,
   ExternalLink,
   MessageCircle,
 } from 'lucide-react';
@@ -132,15 +131,6 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate, onSwitchView }) => {
                 Plot Purchase + Construction Loan
               </li>
             </ul>
-            <div className="pt-2">
-              <button
-                onClick={() => onSwitchView('admin')}
-                className="text-xs text-amber-300/80 hover:text-amber-300 flex items-center gap-1 underline underline-offset-4"
-              >
-                <Shield className="w-3.5 h-3.5" />
-                Staff / Admin Management Portal
-              </button>
-            </div>
           </div>
 
           {/* Office Address & Working Hours */}
