@@ -144,8 +144,9 @@ if [[ $DRY_RUN -eq 0 ]]; then
   echo "==> Re-optimizing caches..."
   ssh_to "cd '${REMOTE_DIR}' && ${REMOTE_PHP} artisan optimize || true"
 
-  # Idempotent; -f refreshes an existing link without erroring.
-  ssh_to "cd '${REMOTE_DIR}' && ${REMOTE_PHP} artisan storage:link -f || true"
+  # No -f flag: Laravel 13's storage:link has no such option and would error.
+  # || true keeps a pre-existing link from failing the deploy.
+  ssh_to "cd '${REMOTE_DIR}' && ${REMOTE_PHP} artisan storage:link || true"
 
   echo "==> Fixing ownership and permissions..."
   ssh_to "chown -R '${SSH_USER}:${SSH_USER}' '${REMOTE_DIR}' \
